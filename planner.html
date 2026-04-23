@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Планировщик рациона — МойРацион</title>
     <link rel="stylesheet" href="style.css">
+<link rel="icon" type="image/png" href="favicon.png">
 </head>
 <body>
 <header class="header"><div class="container header__inner"><a href="index.html" class="logo"><span class="logo__icon">🍳</span><span class="logo__text">МойРацион</span></a><nav class="nav"><a href="index.html" class="nav__link">Главная</a><a href="planner.html" class="nav__link nav__link--active">Планировщик</a><a href="recipes.html" class="nav__link">Рецепты</a><a href="journal.html" class="nav__link">Дневник</a><a href="calculator.html" class="nav__link">Калькулятор</a></nav></div></header>
@@ -470,42 +471,32 @@ function openNutrientRecs() {
     var primary = needProtein ? 'prot' : (needFat ? 'fat' : (needCarbs ? 'carbs' : 'kcal'));
     suggestions.sort(function(a, b) { return b[primary] - a[primary]; });
 
-    /* Группировка по категориям + отбор топ-3 из каждой */
-    var byCat = { breakfast: [], lunch: [], dinner: [], snack: [] };
-    suggestions.forEach(function(r) {
-        if (byCat[r.cat] && byCat[r.cat].length < 3) byCat[r.cat].push(r);
-    });
+    /* Топ-12 */
+    suggestions = suggestions.slice(0, 12);
 
-    /* Рендер — сначала завтрак, потом обед, ужин, перекус */
-    var catOrder = ['breakfast', 'lunch', 'dinner', 'snack'];
-    var catNames = { breakfast:'🌅 Завтраки', lunch:'☀️ Обеды', dinner:'🌙 Ужины', snack:'🍎 Перекусы' };
+    /* Рендер */
+    var catNames = { breakfast:'🌅 Завтрак', lunch:'☀️ Обед', dinner:'🌙 Ужин', snack:'🍎 Перекус' };
     var html = '';
-    var totalCount = catOrder.reduce(function(sum, c) { return sum + byCat[c].length; }, 0);
-
-    if (totalCount === 0) {
+    if (suggestions.length === 0) {
         html = '<p style="text-align:center;color:var(--text-light);padding:20px">Подходящих блюд не нашлось. Попробуйте удалить что-то из дня или уменьшить целевую норму.</p>';
     } else {
-        catOrder.forEach(function(cat) {
-            var list = byCat[cat];
-            if (list.length === 0) return;
-            html += '<h3 class="nrecs-cat-title">' + catNames[cat] + '</h3>';
-            html += '<div class="nrecs-grid">';
-            list.forEach(function(r) {
-                var img = r.img
-                    ? '<div class="nrec-item__img" style="background-image:url(\'' + r.img + '\')"></div>'
-                    : '<div class="nrec-item__img nrec-item__img--empty">🍽</div>';
-                var escName = r.name.replace(/'/g, "&apos;").replace(/"/g, '&quot;');
-                html += '<div class="nrec-item">' +
-                    img +
-                    '<div class="nrec-item__body">' +
-                        '<div class="nrec-item__name">' + r.name + '</div>' +
-                        '<div class="nrec-item__nums">' + r.kcal + ' ккал · Б' + r.prot + ' · Ж' + r.fat + ' · У' + r.carbs + '</div>' +
-                        '<button class="nrec-item__add" onclick="addRecommended(\'' + escName + '\')">+ Добавить в план</button>' +
-                    '</div>' +
-                '</div>';
-            });
-            html += '</div>';
+        html = '<div class="nrecs-grid">';
+        suggestions.forEach(function(r) {
+            var img = r.img
+                ? '<div class="nrec-item__img" style="background-image:url(\'' + r.img + '\')"></div>'
+                : '<div class="nrec-item__img nrec-item__img--empty">🍽</div>';
+            var escName = r.name.replace(/'/g, "&apos;").replace(/"/g, '&quot;');
+            html += '<div class="nrec-item">' +
+                img +
+                '<div class="nrec-item__body">' +
+                    '<div class="nrec-item__cat">' + catNames[r.cat] + '</div>' +
+                    '<div class="nrec-item__name">' + r.name + '</div>' +
+                    '<div class="nrec-item__nums">' + r.kcal + ' ккал · Б' + r.prot + ' · Ж' + r.fat + ' · У' + r.carbs + '</div>' +
+                    '<button class="nrec-item__add" onclick="addRecommended(\'' + escName + '\')">+ Добавить в план</button>' +
+                '</div>' +
+            '</div>';
         });
+        html += '</div>';
     }
     document.getElementById('nrecs-list').innerHTML = html;
 

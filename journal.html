@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Дневник — МойРацион</title>
     <link rel="stylesheet" href="style.css">
+<link rel="icon" type="image/png" href="favicon.png">
 </head>
 <body>
 <header class="header"><div class="container header__inner"><a href="index.html" class="logo"><span class="logo__icon">🍳</span><span class="logo__text">МойРацион</span></a><nav class="nav"><a href="index.html" class="nav__link">Главная</a><a href="planner.html" class="nav__link">Планировщик</a><a href="recipes.html" class="nav__link">Рецепты</a><a href="journal.html" class="nav__link nav__link--active">Дневник</a><a href="calculator.html" class="nav__link">Калькулятор</a></nav></div></header>
@@ -42,50 +43,66 @@
                 <div class="weight-history" id="weight-history"></div>
             </div>
 
-            <!-- Трекер воды -->
+            <!-- Сегодня: вода + отметка рациона -->
             <div class="journal-block">
-                <h2 class="journal-block__title">💧 Вода сегодня</h2>
-                <p class="journal-block__desc">Цель — 8 стаканов воды в день (~2 литра). Счётчик обнуляется каждый день автоматически.</p>
+                <h2 class="journal-block__title">📅 Сегодня</h2>
+                <p class="journal-block__desc">Отмечайте выпитую воду и соблюдение рациона</p>
 
-                <div class="water-tracker">
-                    <div class="water-tracker__top">
-                        <div class="water-tracker__count">
-                            <span class="water-tracker__big" id="water-big">0</span>
-                            <span class="water-tracker__goal">из 8 стаканов</span>
-                        </div>
-                        <div class="water-tracker__actions">
-                            <button class="water-btn water-btn--minus" onclick="waterMinus()">−1</button>
-                            <button class="water-btn water-btn--plus" onclick="waterPlus()">+1 стакан</button>
-                        </div>
+                <!-- Подсекция: вода -->
+                <div class="today-section">
+                    <div class="today-section__head">
+                        <span class="today-section__label">💧 Вода</span>
+                        <span class="today-section__hint">цель — 8 стаканов в день</span>
                     </div>
 
-                    <div class="water-tracker__bar">
-                        <div class="water-tracker__fill" id="water-fill"></div>
+                    <div class="water-tracker">
+                        <div class="water-tracker__top">
+                            <div class="water-tracker__count">
+                                <span class="water-tracker__big" id="water-big">0</span>
+                                <span class="water-tracker__goal">из 8 стаканов</span>
+                            </div>
+                            <div class="water-tracker__actions">
+                                <button class="water-btn water-btn--minus" onclick="waterMinus()">−1</button>
+                                <button class="water-btn water-btn--plus" onclick="waterPlus()">+1 стакан</button>
+                            </div>
+                        </div>
+
+                        <div class="water-tracker__bar">
+                            <div class="water-tracker__fill" id="water-fill"></div>
+                        </div>
+
+                        <div class="water-tracker__cups" id="water-cups"></div>
+                    </div>
+                </div>
+
+                <!-- Разделитель -->
+                <div class="today-divider"></div>
+
+                <!-- Подсекция: соблюдение рациона -->
+                <div class="today-section">
+                    <div class="today-section__head">
+                        <span class="today-section__label">✅ Соблюдение рациона</span>
+                        <span class="today-section__hint" id="today-date"></span>
                     </div>
 
-                    <div class="water-tracker__cups" id="water-cups"></div>
+                    <div class="today-check">
+                        <div class="today-check__info">
+                            <span class="today-check__label">Как прошёл день?</span>
+                        </div>
+                        <div class="today-check__buttons">
+                            <button class="check-btn check-btn--yes" id="btn-yes" onclick="markDay('yes')">✅ Соблюдал</button>
+                            <button class="check-btn check-btn--partial" id="btn-partial" onclick="markDay('partial')">⚖️ Частично</button>
+                            <button class="check-btn check-btn--no" id="btn-no" onclick="markDay('no')">❌ Нет</button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <!-- Отметка рациона -->
+            <!-- Календарь -->
             <div class="journal-block">
-                <h2 class="journal-block__title">✅ Выполнение рациона</h2>
-                <p class="journal-block__desc">Отмечайте дни, когда придерживались плана</p>
+                <h2 class="journal-block__title">🗓 Календарь соблюдения</h2>
+                <p class="journal-block__desc">История выполнения рациона по месяцам</p>
 
-                <!-- Сегодня -->
-                <div class="today-check">
-                    <div class="today-check__info">
-                        <span class="today-check__date" id="today-date"></span>
-                        <span class="today-check__label">Как прошёл день?</span>
-                    </div>
-                    <div class="today-check__buttons">
-                        <button class="check-btn check-btn--yes" id="btn-yes" onclick="markDay('yes')">✅ Соблюдал</button>
-                        <button class="check-btn check-btn--partial" id="btn-partial" onclick="markDay('partial')">⚖️ Частично</button>
-                        <button class="check-btn check-btn--no" id="btn-no" onclick="markDay('no')">❌ Нет</button>
-                    </div>
-                </div>
-
-                <!-- Календарь -->
                 <div class="calendar-wrapper">
                     <div class="calendar-header">
                         <button class="calendar-nav" onclick="changeMonth(-1)">‹</button>
