@@ -35,12 +35,55 @@
         nav.appendChild(btn);
     }
 
+    /* ========== МОБИЛЬНОЕ МЕНЮ-БУРГЕР ========== */
+    function initBurgerMenu() {
+        var header = document.querySelector('.header__inner');
+        var nav = document.querySelector('.header .nav');
+        if (!header || !nav) return;
+
+        /* Кнопка-бургер */
+        var burger = document.createElement('button');
+        burger.className = 'burger';
+        burger.setAttribute('aria-label', 'Открыть меню');
+        burger.innerHTML = '<span></span><span></span><span></span>';
+
+        /* Вставляем после логотипа (чтобы логотип слева, бургер справа) */
+        header.appendChild(burger);
+
+        burger.addEventListener('click', function(e) {
+            e.stopPropagation();
+            nav.classList.toggle('nav--open');
+            burger.classList.toggle('burger--open');
+            document.body.classList.toggle('nav-open-body');
+        });
+
+        /* Клик по ссылке внутри меню — закрыть */
+        nav.addEventListener('click', function(e) {
+            if (e.target.tagName === 'A') {
+                nav.classList.remove('nav--open');
+                burger.classList.remove('burger--open');
+                document.body.classList.remove('nav-open-body');
+            }
+        });
+
+        /* Клик вне меню — закрыть */
+        document.addEventListener('click', function(e) {
+            if (!nav.contains(e.target) && !burger.contains(e.target)) {
+                nav.classList.remove('nav--open');
+                burger.classList.remove('burger--open');
+                document.body.classList.remove('nav-open-body');
+            }
+        });
+    }
+
     /* ========== ИНИЦИАЛИЗАЦИЯ ========== */
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', function() {
+            initBurgerMenu();
             initRestartQuiz();
         });
     } else {
+        initBurgerMenu();
         initRestartQuiz();
     }
 })();

@@ -272,7 +272,7 @@ a{text-decoration:none;color:inherit}img{max-width:100%;display:block}
 
 /* RESPONSIVE */
 @media(max-width:1024px){.hero__inner{flex-direction:column;text-align:center}.hero__content{max-width:100%}.hero__actions{justify-content:center}.hero__visual{min-height:300px;width:100%}.features__grid{grid-template-columns:1fr;max-width:480px;margin:0 auto}.steps{flex-direction:column;align-items:center}.step__connector{width:2px;height:40px;margin:0}.stats__grid{grid-template-columns:repeat(2,1fr)}.footer__inner{grid-template-columns:1fr;gap:32px}.recipes__grid{grid-template-columns:1fr 1fr}.nutrition-grid{grid-template-columns:repeat(2,1fr)}.form-grid{grid-template-columns:1fr}.calc-result__breakdown{grid-template-columns:1fr;gap:12px}}
-@media(max-width:640px){.section-title{font-size:1.75rem}.hero__title{font-size:2rem}.nav{gap:2px}.nav__link{padding:8px 12px;font-size:.82rem}.recipes__grid{grid-template-columns:1fr}.calc-card{padding:28px 20px}.recipe-detail__header,.recipe-detail__content{padding:28px 20px}}
+@media(max-width:640px){.section-title{font-size:1.75rem}.hero__title{font-size:2rem}.recipes__grid{grid-template-columns:1fr}.calc-card{padding:28px 20px}.recipe-detail__header,.recipe-detail__content{padding:28px 20px}}
 
 /* ЗАГЛУШКИ КАРТОЧЕК (удалить когда будут фото) */
 .recipe-card__img.placeholder {
@@ -1489,24 +1489,56 @@ a.sp-meal--link:hover .sp-meal__name { color:var(--primary); }
 
 /* ===== Мобильные (до 640px) ===== */
 @media (max-width: 640px) {
-    /* Навигация — горизонтальный скролл */
+    /* Бургер-меню: навигация скрыта по умолчанию, появляется по клику */
     .nav{
+        position:absolute;
+        top:100%;left:0;right:0;
+        flex-direction:column;
+        background:var(--white);
+        border-top:1px solid var(--border);
+        border-bottom:1px solid var(--border);
+        padding:8px 0;
+        box-shadow:0 8px 24px rgba(0,0,0,.08);
         gap:0;
-        overflow-x:auto;
-        -webkit-overflow-scrolling:touch;
-        flex-wrap:nowrap;
-        padding-bottom:2px;
-        scrollbar-width:none;
+        transform:translateY(-10px);
+        opacity:0;
+        pointer-events:none;
+        transition:all .2s ease;
+        z-index:99;
     }
-    .nav::-webkit-scrollbar{display:none}
+    .nav--open{
+        transform:translateY(0);
+        opacity:1;
+        pointer-events:auto;
+    }
     .nav__link{
-        flex-shrink:0;padding:8px 14px;font-size:.82rem;
-        white-space:nowrap;
+        padding:14px 24px;
+        font-size:.95rem;
+        border-radius:0;
+        border-left:3px solid transparent;
+    }
+    .nav__link--active{
+        border-left-color:var(--primary);
+        background:var(--primary-pale);
+    }
+    .nav__restart{
+        margin:8px 20px;
+        width:auto;
     }
 
-    /* Хедер в столбик чтобы поместилось */
-    .header__inner{flex-direction:column;gap:10px;padding:10px 0}
-    .header{position:relative}
+    /* Хедер оставляем в строке: логотип слева, бургер справа */
+    .header__inner{
+        flex-direction:row;
+        justify-content:space-between;
+        align-items:center;
+        gap:0;
+        padding:14px 0;
+        height:auto;
+    }
+    .header{position:sticky;top:0;z-index:100}
+
+    /* Блокировка скролла страницы когда меню открыто */
+    body.nav-open-body{overflow:hidden}
 
     /* Hero */
     .hero{padding:36px 0}
@@ -1676,4 +1708,36 @@ a.sp-meal--link:hover .sp-meal__name { color:var(--primary); }
     .feature-card:hover, .recipe-card:hover, .extra-card:hover{
         transform:none;
     }
+}
+
+/* ============ КНОПКА-БУРГЕР ============ */
+.burger{
+    display:none;
+    width:42px;height:42px;
+    background:transparent;
+    border:1px solid var(--border);
+    border-radius:10px;
+    cursor:pointer;
+    padding:0;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    gap:5px;
+    transition:all .2s ease;
+}
+.burger:hover{background:var(--primary-pale);border-color:var(--primary)}
+.burger span{
+    display:block;
+    width:20px;height:2px;
+    background:var(--text);
+    border-radius:2px;
+    transition:all .25s ease;
+}
+/* Анимация крестика когда меню открыто */
+.burger--open span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+.burger--open span:nth-child(2){opacity:0}
+.burger--open span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+
+@media (max-width: 640px) {
+    .burger{display:flex}
 }
