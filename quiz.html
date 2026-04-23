@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Персональный план питания — МойРацион</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .quiz-wrap{max-width:600px;margin:0 auto;padding:40px 20px 80px}
+        .quiz-progress{display:flex;gap:4px;margin-bottom:32px}
+        .quiz-progress__bar{flex:1;height:4px;border-radius:2px;background:var(--border);transition:background .3s}
+        .quiz-progress__bar--done{background:var(--primary)}
+        .quiz-progress__bar--active{background:var(--primary-light)}
+        .quiz-step{display:none;animation:fadeIn .4s ease}
+        .quiz-step--active{display:block}
+        @keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+        .quiz-step__num{font-size:.78rem;font-weight:600;color:var(--primary);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px}
+        .quiz-step__title{font-family:var(--font-display);font-size:1.6rem;font-weight:700;color:var(--dark);margin-bottom:8px;line-height:1.25}
+        .quiz-step__desc{color:var(--text-light);font-size:.92rem;margin-bottom:28px}
+        .quiz-options{display:flex;flex-direction:column;gap:10px}
+        .quiz-options--multi .quiz-opt--selected .quiz-opt__icon{background:var(--primary);color:white}
+        .quiz-options--multi .quiz-opt--selected::after{content:'✓';margin-left:auto;color:var(--primary);font-weight:700;font-size:1.2rem}
+        .quiz-opt{padding:16px 20px;border:2px solid var(--border);border-radius:var(--radius);cursor:pointer;transition:all .25s;display:flex;align-items:center;gap:12px;font-size:.95rem;font-weight:500;color:var(--dark);background:var(--white)}
+        .quiz-opt:hover{border-color:var(--primary-light);background:var(--primary-pale)}
+        .quiz-opt--selected{border-color:var(--primary);background:var(--primary-pale)}
+        .quiz-opt__icon{font-size:1.3rem;width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:var(--bg);flex-shrink:0}
+        .quiz-opt--selected .quiz-opt__icon{background:var(--primary);color:white;font-size:.9rem}
+        .quiz-input-group{margin-bottom:20px}
+        .quiz-input-group label{display:block;font-size:.88rem;font-weight:600;color:var(--dark);margin-bottom:6px}
+        .quiz-input-group input{width:100%;padding:14px 16px;border:2px solid var(--border);border-radius:var(--radius);font-family:var(--font-body);font-size:1rem;color:var(--dark);background:var(--white);outline:none;transition:border-color .25s}
+        .quiz-input-group input:focus{border-color:var(--primary)}
+        .quiz-input-group .unit{font-size:.82rem;color:var(--text-light);margin-top:4px}
+        .quiz-btn{display:block;width:100%;padding:16px;border-radius:50px;font-family:var(--font-body);font-size:1rem;font-weight:600;border:none;cursor:pointer;transition:all .25s;margin-top:24px}
+        .quiz-btn--primary{background:linear-gradient(135deg,var(--primary),var(--primary-light));color:var(--white)}
+        .quiz-btn--primary:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(181,101,29,.2)}
+        .quiz-btn--primary:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none}
+        .quiz-btn--back{background:transparent;color:var(--text-light);font-size:.88rem;margin-top:12px;padding:10px}
+        .quiz-btn--back:hover{color:var(--primary)}
+
+        /* Шкалы результата */
+        .quiz-result{display:none;animation:fadeIn .5s ease}
+        .quiz-result--show{display:block}
+        .qr-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius-lg);padding:32px;margin-bottom:20px}
+        .qr-card__title{font-family:var(--font-display);font-size:1.15rem;font-weight:600;color:var(--dark);margin-bottom:16px}
+        .qr-bmi{display:flex;align-items:baseline;gap:12px;margin-bottom:16px}
+        .qr-bmi__val{font-family:var(--font-display);font-size:2.5rem;font-weight:700;color:var(--primary)}
+        .qr-bmi__status{padding:4px 14px;border-radius:50px;font-size:.85rem;font-weight:600}
+        .qr-bmi__status--normal{background:#dcfce7;color:#16a34a}
+        .qr-bmi__status--under{background:#dbeafe;color:#1d4ed8}
+        .qr-bmi__status--over{background:#fef3c7;color:#d97706}
+        .qr-bmi__status--obese{background:#fee2e2;color:#dc2626}
+        .qr-kcal{text-align:center;padding:28px}
+        .qr-kcal__num{font-family:var(--font-display);font-size:3rem;font-weight:700;color:var(--primary)}
+        .qr-kcal__label{color:var(--text-light);font-size:.92rem;margin-top:4px}
+        .qr-macros{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px}
+        .qr-macro{text-align:center;padding:16px;border-radius:var(--radius);background:var(--bg)}
+        .qr-macro__val{font-family:var(--font-display);font-size:1.4rem;font-weight:700;color:var(--dark)}
+        .qr-macro__lbl{font-size:.78rem;color:var(--text-light);margin-top:2px}
+
+        /* План питания */
+        .qr-plan__day{margin-bottom:20px}
+        .qr-plan__day-title{font-family:var(--font-display);font-size:1rem;font-weight:700;color:var(--dark);margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid var(--primary-pale)}
+        .qr-meal{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}
+        .qr-meal:last-child{border-bottom:none}
+        .qr-meal__img{width:44px;height:44px;border-radius:10px;background-size:cover;background-position:center;background-color:var(--primary-pale);flex-shrink:0}
+        .qr-meal__slot{font-size:.72rem;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:.04em;width:65px;flex-shrink:0}
+        .qr-meal__name{flex:1;font-size:.9rem;font-weight:500;color:var(--dark)}
+        .qr-meal__kcal{font-size:.82rem;font-weight:600;color:var(--text-light);flex-shrink:0}
+        .qr-total{display:flex;justify-content:space-between;padding:10px 0;font-weight:700;color:var(--primary);border-top:2px solid var(--primary-pale);margin-top:4px}
+
+        .quiz-cta{display:flex;gap:10px;margin-top:24px}
+        .quiz-cta .btn{flex:1;text-align:center}
+    </style>
+</head>
+<body>
+<header class="header"><div class="container header__inner"><a href="index.html" class="logo"><span class="logo__icon">🍳</span><span class="logo__text">МойРацион</span></a><nav class="nav"><a href="index.html" class="nav__link">Главная</a><a href="planner.html" class="nav__link">Планировщик</a><a href="recipes.html" class="nav__link">Рецепты</a><a href="journal.html" class="nav__link">Дневник</a><a href="calculator.html" class="nav__link">Калькулятор</a></nav></div></header>
+
+<div class="quiz-wrap">
+    <!-- Прогресс -->
+    <div class="quiz-progress" id="progress"></div>
+
+    <!-- ШАГ 1: Пол -->
+    <div class="quiz-step quiz-step--active" data-step="0">
+        <div class="quiz-step__num">Шаг 1 из 10</div>
+        <h2 class="quiz-step__title">Укажите ваш пол</h2>
+        <div class="quiz-options">
+            <div class="quiz-opt" onclick="selectOpt(this,'gender','male')"><span class="quiz-opt__icon">👨</span>Мужской</div>
+            <div class="quiz-opt" onclick="selectOpt(this,'gender','female')"><span class="quiz-opt__icon">👩</span>Женский</div>
+        </div>
+    </div>
+
+    <!-- ШАГ 2: Цель -->
+    <div class="quiz-step" data-step="1">
+        <div class="quiz-step__num">Шаг 2 из 10</div>
+        <h2 class="quiz-step__title">Какая ваша главная цель?</h2>
+        <div class="quiz-options">
+            <div class="quiz-opt" onclick="selectOpt(this,'goal','lose')"><span class="quiz-opt__icon">📉</span>Сбросить вес</div>
+            <div class="quiz-opt" onclick="selectOpt(this,'goal','maintain')"><span class="quiz-opt__icon">⚖️</span>Поддержать вес</div>
+            <div class="quiz-opt" onclick="selectOpt(this,'goal','gain')"><span class="quiz-opt__icon">💪</span>Набрать массу</div>
+        </div>
+    </div>
+
+    <!-- ШАГ 3: Активность -->
+    <div class="quiz-step" data-step="2">
+        <div class="quiz-step__num">Шаг 3 из 10</div>
+        <h2 class="quiz-step__title">Как часто вы занимаетесь спортом?</h2>
+        <div class="quiz-options">
+            <div class="quiz-opt" onclick="selectOpt(this,'activity','1.2')"><span class="quiz-opt__icon">🪑</span>Почти не двигаюсь (сидячий)</div>
+            <div class="quiz-opt" onclick="selectOpt(this,'activity','1.375')"><span class="quiz-opt__icon">🚶</span>Лёгкая активность (1–3 раза/нед)</div>
+            <div class="quiz-opt" onclick="selectOpt(this,'activity','1.55')"><span class="quiz-opt__icon">🏃</span>Средняя активность (3–5 раз/нед)</div>
+            <div class="quiz-opt" onclick="selectOpt(this,'activity','1.725')"><span class="quiz-opt__icon">🏋️</span>Высокая активность (6–7 раз/нед)</div>
+        </div>
+    </div>
+
+    <!-- ШАГ 4: Сколько раз едите -->
+    <div class="quiz-step" data-step="3">
+        <div class="quiz-step__num">Шаг 4 из 10</div>
+        <h2 class="quiz-step__title">Сколько раз в день вы обычно едите?</h2>
+        <div class="quiz-options">
+            <div class="quiz-opt" onclick="selectOpt(this,'meals','2')"><span class="quiz-opt__icon">2️⃣</span>Два раза</div>
+            <div class="quiz-opt" onclick="selectOpt(this,'meals','3')"><span class="quiz-opt__icon">3️⃣</span>Три раза</div>
+            <div class="quiz-opt" onclick="selectOpt(this,'meals','4')"><span class="quiz-opt__icon">4️⃣</span>Четыре и больше</div>
+        </div>
+    </div>
+
+    <!-- ШАГ 5: Проблемы с питанием -->
+    <div class="quiz-step" data-step="4">
+        <div class="quiz-step__num">Шаг 5 из 10</div>
+        <h2 class="quiz-step__title">Есть ли у вас проблемы с питанием?</h2>
+        <p class="quiz-step__desc">Выберите один вариант</p>
+        <div class="quiz-options">
+            <div class="quiz-opt" onclick="selectOpt(this,'problem','overeating')"><span class="quiz-opt__icon">🍔</span>Переедание</div>
+            <div class="quiz-opt" onclick="selectOpt(this,'problem','snacking')"><span class="quiz-opt__icon">🌙</span>Ночные перекусы</div>
+            <div class="quiz-opt" onclick="selectOpt(this,'problem','skipping')"><span class="quiz-opt__icon">⏭</span>Пропуск приёмов пищи</div>
+            <div class="quiz-opt" onclick="selectOpt(this,'problem','emotional')"><span class="quiz-opt__icon">😔</span>Эмоциональное заедание</div>
+            <div class="quiz-opt" onclick="selectOpt(this,'problem','none')"><span class="quiz-opt__icon">✅</span>Нет проблем</div>
+        </div>
+    </div>
+
+    <!-- ШАГ 6: Тип питания / диета -->
+    <div class="quiz-step" data-step="5">
+        <div class="quiz-step__num">Шаг 6 из 10</div>
+        <h2 class="quiz-step__title">Придерживаетесь ли вы особой диеты?</h2>
+        <p class="quiz-step__desc">Мы исключим неподходящие рецепты из вашего плана</p>
+        <div class="quiz-options">
+            <div class="quiz-opt" onclick="selectOpt(this,'diet','none')"><span class="quiz-opt__icon">🍽</span>Нет, ем всё</div>
+            <div class="quiz-opt" onclick="selectOpt(this,'diet','vegetarian')"><span class="quiz-opt__icon">🥗</span>Вегетарианство (без мяса и рыбы)</div>
+            <div class="quiz-opt" onclick="selectOpt(this,'diet','pescatarian')"><span class="quiz-opt__icon">🐟</span>Пескетарианство (без мяса, рыбу можно)</div>
+            <div class="quiz-opt" onclick="selectOpt(this,'diet','vegan')"><span class="quiz-opt__icon">🌱</span>Веганство (без продуктов животного происхождения)</div>
+        </div>
+    </div>
+
+    <!-- ШАГ 7: Аллергии и непереносимости -->
+    <div class="quiz-step" data-step="6">
+        <div class="quiz-step__num">Шаг 7 из 10</div>
+        <h2 class="quiz-step__title">Есть ли непереносимости или нелюбимые продукты?</h2>
+        <p class="quiz-step__desc">Выберите несколько вариантов или пропустите этот шаг</p>
+        <div class="quiz-options quiz-options--multi">
+            <div class="quiz-opt" data-multi="lactose" onclick="toggleMulti(this,'allergies','lactose')"><span class="quiz-opt__icon">🥛</span>Непереносимость лактозы (молоко, сыр)</div>
+            <div class="quiz-opt" data-multi="gluten" onclick="toggleMulti(this,'allergies','gluten')"><span class="quiz-opt__icon">🌾</span>Непереносимость глютена (хлеб, паста)</div>
+            <div class="quiz-opt" data-multi="eggs" onclick="toggleMulti(this,'allergies','eggs')"><span class="quiz-opt__icon">🥚</span>Не ем яйца</div>
+            <div class="quiz-opt" data-multi="nuts" onclick="toggleMulti(this,'allergies','nuts')"><span class="quiz-opt__icon">🥜</span>Аллергия на орехи</div>
+            <div class="quiz-opt" data-multi="mushrooms" onclick="toggleMulti(this,'allergies','mushrooms')"><span class="quiz-opt__icon">🍄</span>Не ем грибы</div>
+            <div class="quiz-opt" data-multi="seafood" onclick="toggleMulti(this,'allergies','seafood')"><span class="quiz-opt__icon">🦐</span>Не ем морепродукты</div>
+        </div>
+        <button class="quiz-btn quiz-btn--primary" onclick="nextStep()">Далее</button>
+        <button class="quiz-btn quiz-btn--back" onclick="goBack()">← Назад</button>
+    </div>
+
+    <!-- ШАГ 8: Вода -->
+    <div class="quiz-step" data-step="7">
+        <div class="quiz-step__num">Шаг 8 из 10</div>
+        <h2 class="quiz-step__title">Сколько воды вы пьёте в день?</h2>
+        <div class="quiz-options">
+            <div class="quiz-opt" onclick="selectOpt(this,'water','low')"><span class="quiz-opt__icon">☕</span>Только чай или кофе</div>
+            <div class="quiz-opt" onclick="selectOpt(this,'water','medium')"><span class="quiz-opt__icon">💧</span>2–4 стакана воды</div>
+            <div class="quiz-opt" onclick="selectOpt(this,'water','high')"><span class="quiz-opt__icon">💦</span>5 и более стаканов</div>
+        </div>
+    </div>
+
+    <!-- ШАГ 9: Сон -->
+    <div class="quiz-step" data-step="8">
+        <div class="quiz-step__num">Шаг 9 из 10</div>
+        <h2 class="quiz-step__title">Сколько часов вы спите?</h2>
+        <div class="quiz-options">
+            <div class="quiz-opt" onclick="selectOpt(this,'sleep','little')"><span class="quiz-opt__icon">😴</span>Менее 6 часов</div>
+            <div class="quiz-opt" onclick="selectOpt(this,'sleep','normal')"><span class="quiz-opt__icon">😊</span>6–8 часов</div>
+            <div class="quiz-opt" onclick="selectOpt(this,'sleep','much')"><span class="quiz-opt__icon">😌</span>Более 8 часов</div>
+        </div>
+    </div>
+
+    <!-- ШАГ 10: Параметры тела -->
+    <div class="quiz-step" data-step="9">
+        <div class="quiz-step__num">Шаг 10 из 10</div>
+        <h2 class="quiz-step__title">Укажите ваши параметры</h2>
+        <p class="quiz-step__desc">Эти данные нужны для точного расчёта вашей нормы</p>
+        <div class="quiz-input-group"><label>Возраст</label><input type="number" id="q-age" placeholder="25" min="14" max="100"><div class="unit">от 14 до 100 лет</div></div>
+        <div class="quiz-input-group"><label>Рост (см)</label><input type="number" id="q-height" placeholder="175" min="120" max="250"><div class="unit">от 120 до 250 см</div></div>
+        <div class="quiz-input-group"><label>Текущий вес (кг)</label><input type="number" id="q-weight" placeholder="70" min="30" max="300"><div class="unit">от 30 до 300 кг</div></div>
+        <button class="quiz-btn quiz-btn--primary" onclick="finishQuiz()">Получить план питания</button>
+        <button class="quiz-btn quiz-btn--back" onclick="goBack()">← Назад</button>
+    </div>
+
+    <!-- РЕЗУЛЬТАТ -->
+    <div class="quiz-result" id="quiz-result">
+        <h2 class="quiz-step__title" style="text-align:center;margin-bottom:24px">Ваш персональный план готов!</h2>
+
+        <div class="qr-card">
+            <div class="qr-card__title">Индекс массы тела</div>
+            <div class="qr-bmi">
+                <div class="qr-bmi__val" id="qr-bmi">—</div>
+                <div class="qr-bmi__status" id="qr-bmi-status">—</div>
+            </div>
+        </div>
+
+        <div class="qr-card qr-kcal">
+            <div class="qr-kcal__label">Ваша суточная норма</div>
+            <div class="qr-kcal__num" id="qr-kcal">—</div>
+            <div class="qr-kcal__label" id="qr-goal-label">ккал / день</div>
+            <div class="qr-macros">
+                <div class="qr-macro"><div class="qr-macro__val" id="qr-prot">—</div><div class="qr-macro__lbl">Белки (г)</div></div>
+                <div class="qr-macro"><div class="qr-macro__val" id="qr-fat">—</div><div class="qr-macro__lbl">Жиры (г)</div></div>
+                <div class="qr-macro"><div class="qr-macro__val" id="qr-carbs">—</div><div class="qr-macro__lbl">Углеводы (г)</div></div>
+            </div>
+        </div>
+
+        <div class="qr-card" id="qr-tips-card">
+            <div class="qr-card__title">Рекомендации для вас</div>
+            <div id="qr-tips"></div>
+        </div>
+
+        <div class="qr-card">
+            <div class="qr-card__title">Примерный план питания (Понедельник)</div>
+            <div id="qr-plan"></div>
+        </div>
+
+        <p style="text-align:center;color:var(--text-light);font-size:.88rem;margin-bottom:16px">План на все 7 дней уже загружен в планировщик</p>
+        <div class="quiz-cta">
+            <a href="planner.html" class="btn btn--primary">Открыть планировщик</a>
+            <a href="recipes.html" class="btn btn--outline">Смотреть рецепты</a>
+        </div>
+    </div>
+</div>
+
+<footer class="footer"><div class="container footer__inner"><div class="footer__brand"><a href="index.html" class="logo"><span class="logo__icon">🍳</span><span class="logo__text">МойРацион</span></a><p class="footer__desc">Дипломный проект, 2026.</p></div><div class="footer__links"><h4 class="footer__heading">Навигация</h4><a href="index.html" class="footer__link">Главная</a><a href="planner.html" class="footer__link">Планировщик</a><a href="recipes.html" class="footer__link">Рецепты</a><a href="journal.html" class="footer__link">Дневник</a><a href="calculator.html" class="footer__link">Калькулятор</a></div><div class="footer__links"><h4 class="footer__heading">Информация</h4><a href="#" class="footer__link">О проекте</a><a href="#" class="footer__link">Контакты</a></div></div><div class="container"><div class="footer__bottom"><p>© 2026 МойРацион. Все права защищены.</p></div></div></footer>
+
+<script>
+var totalSteps = 10;
+var currentStep = 0;
+var answers = { allergies: [] };
+
+/* Рецепты для генерации плана + теги диеты и аллергенов
+   diets: какие диеты ПОДХОДЯТ рецепту (если блюдо подходит веганам, то и остальным тоже)
+   allergens: какие продукты-аллергены есть в блюде */
+var mealDB = {
+    breakfast: [
+        {name:'Овсяная каша с ягодами и мёдом', kcal:350, img:'images/oatmeal.jpg', href:'recipe-oatmeal.html', diets:['vegetarian','pescatarian'], allergens:['lactose','gluten']},
+        {name:'Сырники со сметаной', kcal:390, img:'images/syrniki.jpg', href:'recipe-syrniki.html', diets:['vegetarian','pescatarian'], allergens:['lactose','gluten','eggs']},
+        {name:'Омлет с овощами и сыром', kcal:310, img:'images/omlet.jpg', href:'recipe-omlet.html', diets:['vegetarian','pescatarian'], allergens:['lactose','eggs']},
+        {name:'Смузи-боул с гранолой', kcal:340, img:'images/smoothie-bowl.jpg', href:'recipe-smoothie-bowl.html', diets:['vegetarian','pescatarian','vegan'], allergens:['gluten']},
+        {name:'Гранола с йогуртом и бананом', kcal:360, img:'images/granola.jpg', href:'recipe-granola.html', diets:['vegetarian','pescatarian'], allergens:['lactose','gluten']},
+        {name:'Тосты с авокадо и яйцом', kcal:340, img:'images/avocado-toast.jpg', href:'recipe-avocado-toast.html', diets:['vegetarian','pescatarian'], allergens:['gluten','eggs']},
+        {name:'Творог с мёдом и фруктами', kcal:280, img:'images/cottage-cheese.jpg', href:'recipe-cottage-cheese.html', diets:['vegetarian','pescatarian'], allergens:['lactose']},
+        {name:'Мюсли с молоком и ягодами', kcal:340, img:'images/muesli-bowl.jpg', href:'recipe-muesli-bowl.html', diets:['vegetarian','pescatarian'], allergens:['lactose','gluten']}
+    ],
+    lunch: [
+        {name:'Куриный суп с лапшой', kcal:420, img:'images/chicken-soup.jpg', href:'recipe-chicken-soup.html', diets:[], allergens:['gluten','eggs']},
+        {name:'Борщ со сметаной', kcal:380, img:'images/borsch.jpg', href:'recipe-borsch.html', diets:[], allergens:['lactose']},
+        {name:'Тыквенный крем-суп', kcal:300, img:'images/pumpkin-soup.jpg', href:'recipe-pumpkin-soup.html', diets:['vegetarian','pescatarian'], allergens:['lactose']},
+        {name:'Куриная грудка с рисом и овощами', kcal:420, img:'images/chicken-rice.jpg', href:'recipe-chicken-rice.html', diets:[], allergens:[]},
+        {name:'Паста с томатным соусом и базиликом', kcal:450, img:'images/pasta.jpg', href:'recipe-pasta.html', diets:['vegetarian','pescatarian','vegan'], allergens:['gluten','lactose']},
+        {name:'Грибной суп-пюре', kcal:320, img:'images/mushroom-soup.jpg', href:'recipe-mushroom-soup.html', diets:['vegetarian','pescatarian'], allergens:['lactose','mushrooms']},
+        {name:'Суп из чечевицы', kcal:330, img:'images/lentil-soup.jpg', href:'recipe-lentil-soup.html', diets:['vegetarian','pescatarian','vegan'], allergens:[]},
+        {name:'Паста с овощами и песто', kcal:420, img:'images/veggie-pasta.jpg', href:'recipe-veggie-pasta.html', diets:['vegetarian','pescatarian'], allergens:['gluten','lactose','nuts']}
+    ],
+    dinner: [
+        {name:'Греческий салат с курицей', kcal:450, img:'images/greek-salad.jpg', href:'recipe-greek-salad.html', diets:[], allergens:['lactose']},
+        {name:'Цезарь с креветками', kcal:430, img:'images/caesar.jpg', href:'recipe-caesar.html', diets:['pescatarian'], allergens:['lactose','eggs','gluten','seafood']},
+        {name:'Запечённый лосось с лимоном', kcal:390, img:'images/salmon.jpg', href:'recipe-salmon.html', diets:['pescatarian'], allergens:[]},
+        {name:'Котлеты из индейки с овощами', kcal:370, img:'images/turkey-cutlets.jpg', href:'recipe-turkey-cutlets.html', diets:[], allergens:['gluten','eggs']},
+        {name:'Рыба на пару с брокколи', kcal:280, img:'images/steamed-fish.jpg', href:'recipe-steamed-fish.html', diets:['pescatarian'], allergens:[]}
+    ],
+    snack: [
+        {name:'Йогурт с орехами и мёдом', kcal:180, img:'images/yogurt.jpg', href:'recipe-yogurt.html', diets:['vegetarian','pescatarian'], allergens:['lactose','nuts']},
+        {name:'Фруктовый смузи', kcal:160, img:'images/fruit-smoothie.jpg', href:'recipe-fruit-smoothie.html', diets:['vegetarian','pescatarian','vegan'], allergens:[]},
+        {name:'Горсть миндаля с сухофруктами', kcal:200, img:'images/almonds.jpg', href:'recipe-almonds.html', diets:['vegetarian','pescatarian','vegan'], allergens:['nuts']},
+        {name:'Яблоко с арахисовой пастой', kcal:190, img:'images/apple-peanut.jpg', href:'recipe-apple-peanut.html', diets:['vegetarian','pescatarian','vegan'], allergens:['nuts']},
+        {name:'Творожная запеканка с изюмом', kcal:220, img:'images/zapekanka.jpg', href:'recipe-zapekanka.html', diets:['vegetarian','pescatarian'], allergens:['lactose','eggs','gluten']}
+    ]
+};
+
+/* Фильтр по диете и аллергиям */
+function filterMeals(meals, diet, allergies) {
+    return meals.filter(function(m) {
+        /* Проверка диеты */
+        if (diet && diet !== 'none') {
+            if (!m.diets || m.diets.indexOf(diet) === -1) return false;
+        }
+        /* Проверка аллергий */
+        if (allergies && allergies.length > 0) {
+            for (var i = 0; i < allergies.length; i++) {
+                if (m.allergens && m.allergens.indexOf(allergies[i]) !== -1) return false;
+            }
+        }
+        return true;
+    });
+}
+
+/* Прогресс */
+function renderProgress() {
+    var el = document.getElementById('progress');
+    el.innerHTML = '';
+    for (var i = 0; i < totalSteps; i++) {
+        var bar = document.createElement('div');
+        bar.className = 'quiz-progress__bar';
+        if (i < currentStep) bar.classList.add('quiz-progress__bar--done');
+        if (i === currentStep) bar.classList.add('quiz-progress__bar--active');
+        el.appendChild(bar);
+    }
+}
+
+/* Выбор опции и авто-переход */
+function selectOpt(el, key, value) {
+    answers[key] = value;
+    var opts = el.parentElement.querySelectorAll('.quiz-opt');
+    opts.forEach(function(o) { o.classList.remove('quiz-opt--selected'); });
+    el.classList.add('quiz-opt--selected');
+    el.querySelector('.quiz-opt__icon').textContent = '✓';
+    setTimeout(function() { goNext(); }, 400);
+}
+
+/* Множественный выбор (для аллергий) — без авто-перехода */
+function toggleMulti(el, key, value) {
+    if (!answers[key]) answers[key] = [];
+    var idx = answers[key].indexOf(value);
+    if (idx > -1) {
+        answers[key].splice(idx, 1);
+        el.classList.remove('quiz-opt--selected');
+    } else {
+        answers[key].push(value);
+        el.classList.add('quiz-opt--selected');
+    }
+}
+
+/* Ручной переход к следующему шагу */
+function nextStep() {
+    goNext();
+}
+
+function goNext() {
+    if (currentStep >= totalSteps - 1) return;
+    document.querySelector('[data-step="' + currentStep + '"]').classList.remove('quiz-step--active');
+    currentStep++;
+    document.querySelector('[data-step="' + currentStep + '"]').classList.add('quiz-step--active');
+    renderProgress();
+    window.scrollTo({top: 0, behavior: 'smooth'});
+}
+
+function goBack() {
+    if (currentStep <= 0) return;
+    document.querySelector('[data-step="' + currentStep + '"]').classList.remove('quiz-step--active');
+    currentStep--;
+    document.querySelector('[data-step="' + currentStep + '"]').classList.add('quiz-step--active');
+    renderProgress();
+}
+
+/* Финальный расчёт */
+function finishQuiz() {
+    var age = parseInt(document.getElementById('q-age').value);
+    var height = parseFloat(document.getElementById('q-height').value);
+    var weight = parseFloat(document.getElementById('q-weight').value);
+
+    if (!age || !height || !weight || age < 14 || height < 120 || weight < 30) {
+        alert('Пожалуйста, заполните все поля корректными данными.');
+        return;
+    }
+
+    var gender = answers.gender || 'male';
+    var activity = parseFloat(answers.activity) || 1.375;
+    var goal = answers.goal || 'maintain';
+
+    /* === Используем общую формулу из common.js === */
+    var r = nutriCalc(gender, age, height, weight, activity, goal);
+    var kcal = r.kcal;
+    var prot = r.protein;
+    var fat = r.fat;
+    var carbs = r.carbs;
+
+    var goalLabel = 'для поддержания веса';
+    if (goal === 'lose') goalLabel = 'для похудения (−500 ккал)';
+    if (goal === 'gain') goalLabel = 'для набора массы (+500 ккал)';
+
+    /* ИМТ — из той же функции */
+    var bmi = r.bmi;
+    var bmiR = bmi;
+    var bmiStatus, bmiClass;
+    if (r.bmiStatus === 'under') { bmiStatus = 'Дефицит'; bmiClass = 'qr-bmi__status--under'; }
+    else if (r.bmiStatus === 'normal') { bmiStatus = 'Норма'; bmiClass = 'qr-bmi__status--normal'; }
+    else if (r.bmiStatus === 'over') { bmiStatus = 'Избыток'; bmiClass = 'qr-bmi__status--over'; }
+    else { bmiStatus = 'Ожирение'; bmiClass = 'qr-bmi__status--obese'; }
+
+    /* Сохранить в localStorage */
+    localStorage.setItem('nutriplan_kcal', kcal);
+    localStorage.setItem('nutriplan_protein', prot);
+    localStorage.setItem('nutriplan_fat', fat);
+    localStorage.setItem('nutriplan_carbs', carbs);
+    localStorage.setItem('nutriplan_quiz_done', '1');
+    localStorage.setItem('nutriplan_weight', weight);
+    localStorage.setItem('nutriplan_height', height);
+    localStorage.setItem('nutriplan_goal', goal);
+    localStorage.setItem('nutriplan_water', answers.water || '');
+    localStorage.setItem('nutriplan_sleep', answers.sleep || '');
+    localStorage.setItem('nutriplan_problem', answers.problem || '');
+    localStorage.setItem('nutriplan_activity', answers.activity || '');
+    localStorage.setItem('nutriplan_diet', answers.diet || 'none');
+    localStorage.setItem('nutriplan_allergies', JSON.stringify(answers.allergies || []));
+
+    /* Генерация плана на неделю и сохранение */
+    var targetKcal = kcal;
+    var weekPlan = [];
+    var dayNames = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
+    for (var di = 0; di < 7; di++) {
+        var dayPlan = pickMealsForDay(targetKcal, di);
+        weekPlan.push(dayPlan);
+    }
+    localStorage.setItem('nutriplan_weekplan', JSON.stringify(weekPlan));
+
+    /* Отобразить результат */
+    document.getElementById('qr-bmi').textContent = bmiR;
+    var statusEl = document.getElementById('qr-bmi-status');
+    statusEl.textContent = bmiStatus;
+    statusEl.className = 'qr-bmi__status ' + bmiClass;
+    document.getElementById('qr-kcal').textContent = kcal.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+    document.getElementById('qr-goal-label').textContent = goalLabel;
+    document.getElementById('qr-prot').textContent = prot;
+    document.getElementById('qr-fat').textContent = fat;
+    document.getElementById('qr-carbs').textContent = carbs;
+
+    /* Рекомендации на основе ответов */
+    var tips = [];
+    if (answers.water === 'low') tips.push('💧 Увеличьте потребление воды до 6–8 стаканов в день. Вода ускоряет метаболизм и снижает аппетит.');
+    if (answers.sleep === 'little') tips.push('😴 Старайтесь спать не менее 7 часов. Недосып замедляет обмен веществ и усиливает тягу к сладкому.');
+    if (answers.problem === 'overeating') tips.push('🍽 При склонности к перееданию ешьте медленнее и используйте маленькие тарелки. Это помогает контролировать порции.');
+    if (answers.problem === 'snacking') tips.push('🌙 Чтобы избежать ночных перекусов, плотно ужинайте за 2–3 часа до сна и не держите сладости дома.');
+    if (answers.problem === 'skipping') tips.push('⏰ Не пропускайте приёмы пищи — это замедляет метаболизм. Лучше ешьте маленькими порциями 3–4 раза в день.');
+    if (answers.problem === 'emotional') tips.push('🧘 При эмоциональном заедании попробуйте заменить еду прогулкой, чтением или дыхательными упражнениями.');
+    if (answers.meals === '2') tips.push('🕐 Два приёма пищи — это мало. Добавьте лёгкий перекус между ними для стабильного уровня энергии.');
+    if (goal === 'lose') tips.push('📉 Дефицит 500 ккал в день = примерно −0.5 кг в неделю. Это безопасный темп похудения.');
+    if (goal === 'gain') tips.push('💪 Для набора массы делайте упор на белок (мясо, рыба, яйца, творог) и силовые тренировки.');
+    if (tips.length === 0) tips.push('✅ У вас хорошие привычки! Придерживайтесь сбалансированного питания и активного образа жизни.');
+
+    var tipsHtml = '';
+    tips.forEach(function(t) { tipsHtml += '<p style="padding:8px 0;border-bottom:1px solid var(--border);font-size:.9rem;line-height:1.5">' + t + '</p>'; });
+    document.getElementById('qr-tips').innerHTML = tipsHtml;
+
+    /* Генерация плана на день (показываем понедельник) */
+    var plan = weekPlan[0];
+    var planHtml = '';
+    var totalPlanKcal = 0;
+    var slotLabels = {breakfast:'Завтрак', lunch:'Обед', dinner:'Ужин', snack:'Перекус'};
+    plan.forEach(function(m) {
+        totalPlanKcal += m.kcal;
+        var imgHtml = m.img ? '<div class="qr-meal__img" style="background-image:url(\'' + m.img + '\')"></div>' : '';
+        planHtml += '<div class="qr-meal">' + imgHtml + '<span class="qr-meal__slot">' + slotLabels[m.slot] + '</span><span class="qr-meal__name">' + m.name + '</span><span class="qr-meal__kcal">' + m.kcal + ' ккал</span></div>';
+    });
+    planHtml += '<div class="qr-total"><span>Итого</span><span>' + totalPlanKcal + ' ккал</span></div>';
+    document.getElementById('qr-plan').innerHTML = planHtml;
+
+    /* Скрыть шаг, показать результат */
+    document.querySelector('[data-step="' + currentStep + '"]').classList.remove('quiz-step--active');
+    document.getElementById('progress').style.display = 'none';
+    document.getElementById('quiz-result').classList.add('quiz-result--show');
+    window.scrollTo({top: 0, behavior: 'smooth'});
+}
+
+/* Подбор блюд на день (разные для каждого дня) */
+function pickMealsForDay(target, dayIdx) {
+    var result = [];
+    var remaining = target;
+
+    /* Фильтруем базы под диету и аллергии пользователя */
+    var diet = answers.diet || 'none';
+    var allergies = answers.allergies || [];
+
+    var breakfasts = filterMeals(mealDB.breakfast, diet, allergies);
+    var lunches    = filterMeals(mealDB.lunch,     diet, allergies);
+    var dinners    = filterMeals(mealDB.dinner,    diet, allergies);
+    var snacks     = filterMeals(mealDB.snack,     diet, allergies);
+
+    /* Если после фильтрации пусто — возвращаем полную базу (резерв) */
+    if (breakfasts.length === 0) breakfasts = mealDB.breakfast;
+    if (lunches.length === 0)    lunches    = mealDB.lunch;
+    if (dinners.length === 0)    dinners    = mealDB.dinner;
+    if (snacks.length === 0)     snacks     = mealDB.snack;
+
+    var b = pickByDay(breakfasts, dayIdx, remaining * 0.3);
+    result.push({slot:'breakfast', name:b.name, kcal:b.kcal, img:b.img, href:b.href});
+    remaining -= b.kcal;
+
+    var l = pickByDay(lunches, dayIdx, remaining * 0.45);
+    result.push({slot:'lunch', name:l.name, kcal:l.kcal, img:l.img, href:l.href});
+    remaining -= l.kcal;
+
+    var d = pickByDay(dinners, dayIdx, remaining * 0.6);
+    result.push({slot:'dinner', name:d.name, kcal:d.kcal, img:d.img, href:d.href});
+    remaining -= d.kcal;
+
+    if (remaining > 100) {
+        var s = pickByDay(snacks, dayIdx, remaining);
+        result.push({slot:'snack', name:s.name, kcal:s.kcal, img:s.img, href:s.href});
+    }
+    return result;
+}
+
+function pickByDay(arr, dayIdx, target) {
+    /* Каждый день выбираем другое блюдо по кругу */
+    return arr[dayIdx % arr.length];
+}
+
+function pickClosest(arr, target) {
+    var best = arr[0];
+    var bestDiff = Math.abs(arr[0].kcal - target);
+    arr.forEach(function(item) {
+        var diff = Math.abs(item.kcal - target);
+        if (diff < bestDiff) { best = item; bestDiff = diff; }
+    });
+    return best;
+}
+
+/* Инициализация */
+renderProgress();
+</script>
+<script src="common.js"></script>
+</body>
+</html>

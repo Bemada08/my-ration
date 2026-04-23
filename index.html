@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>МойРацион — Планировщик рациона питания</title>
+<link rel="stylesheet" href="style.css">
+<script>
+/* Редирект на опрос если пользователь не прошёл его или данные повреждены */
+(function() {
+    var done = localStorage.getItem('nutriplan_quiz_done');
+    var kcal = localStorage.getItem('nutriplan_kcal');
+    var weight = localStorage.getItem('nutriplan_weight');
+    /* Считаем прохождение валидным только если есть флаг + КБЖУ + вес */
+    if (!done || !kcal || !weight) {
+        window.location.href = 'quiz.html';
+    }
+})();
+</script>
+</head>
+<body>
+
+<header class="header">
+    <div class="container header__inner">
+        <a href="index.html" class="logo"><span class="logo__icon">🍳</span><span class="logo__text">МойРацион</span></a>
+        <nav class="nav">
+            <a href="index.html" class="nav__link nav__link--active">Главная</a>
+            <a href="planner.html" class="nav__link">Планировщик</a>
+            <a href="recipes.html" class="nav__link">Рецепты</a>
+            <a href="journal.html" class="nav__link">Дневник</a>
+            <a href="calculator.html" class="nav__link">Калькулятор</a>
+        </nav>
+    </div>
+</header>
+
+<!-- ============ HERO ============ -->
+<section class="hero">
+    <div class="container hero__inner">
+        <div class="hero__content">
+            <p class="hero__label">🍽 Домашнее питание с заботой о здоровье</p>
+            <h1 class="hero__title">Планируйте свой рацион <span class="hero__title--accent">легко и осознанно</span></h1>
+            <p class="hero__desc">Персональный план питания, трекер веса, подбор рецептов по диете, список покупок и многое другое — всё в одном месте.</p>
+            <div class="hero__actions">
+                <a href="quiz.html" class="btn btn--primary">Пройти опрос</a>
+                <a href="planner.html" class="btn btn--outline">Открыть планировщик</a>
+            </div>
+        </div>
+        <div class="hero__visual">
+            <div class="hero__card hero__card--1"><span class="hero__card-emoji">🥗</span><span class="hero__card-text">Салаты</span></div>
+            <div class="hero__card hero__card--2"><span class="hero__card-emoji">🍲</span><span class="hero__card-text">Супы</span></div>
+            <div class="hero__card hero__card--3"><span class="hero__card-emoji">🥩</span><span class="hero__card-text">Мясные</span></div>
+            <div class="hero__card hero__card--4"><span class="hero__card-emoji">🍎</span><span class="hero__card-text">Перекусы</span></div>
+            <div class="hero__circle"></div>
+        </div>
+    </div>
+</section>
+
+<!-- ============ ОСНОВНЫЕ ВОЗМОЖНОСТИ ============ -->
+<section class="features">
+    <div class="container">
+        <h2 class="section-title">Возможности сервиса</h2>
+        <p class="section-subtitle">Всё что нужно для контроля питания — в одном месте</p>
+
+        <div class="features__grid features__grid--3">
+            <a href="quiz.html" class="feature-card">
+                <div class="feature-card__icon">📝</div>
+                <h3 class="feature-card__title">Персональный опрос</h3>
+                <p class="feature-card__desc">10 шагов: цель, активность, диета, аллергии. На основе ответов формируется план под вас.</p>
+                <span class="feature-card__link">Пройти →</span>
+            </a>
+            <a href="calculator.html" class="feature-card">
+                <div class="feature-card__icon">⚖️</div>
+                <h3 class="feature-card__title">Калькулятор КБЖУ</h3>
+                <p class="feature-card__desc">Суточная норма калорий, БЖУ и индекс массы тела по формуле Миффлина–Сан Жеора.</p>
+                <span class="feature-card__link">Рассчитать →</span>
+            </a>
+            <a href="recipes.html" class="feature-card">
+                <div class="feature-card__icon">📖</div>
+                <h3 class="feature-card__title">Каталог рецептов</h3>
+                <p class="feature-card__desc">59 блюд с фото, пошаговым приготовлением и КБЖУ. Поиск, фильтры, печать.</p>
+                <span class="feature-card__link">Смотреть →</span>
+            </a>
+            <a href="planner.html" class="feature-card">
+                <div class="feature-card__icon">📅</div>
+                <h3 class="feature-card__title">Планировщик на неделю</h3>
+                <p class="feature-card__desc">Меню на 7 дней со шкалами калорий и БЖУ. Предупреждения о переборе и недоборе.</p>
+                <span class="feature-card__link">Спланировать →</span>
+            </a>
+            <a href="journal.html" class="feature-card">
+                <div class="feature-card__icon">📊</div>
+                <h3 class="feature-card__title">Дневник питания</h3>
+                <p class="feature-card__desc">Трекер веса с графиком, календарь соблюдения рациона, серия успешных дней.</p>
+                <span class="feature-card__link">Вести дневник →</span>
+            </a>
+            <a href="planner.html" class="feature-card">
+                <div class="feature-card__icon">🛒</div>
+                <h3 class="feature-card__title">Список покупок</h3>
+                <p class="feature-card__desc">Автоматически формируется из плана на неделю. Скачивается в PDF перед походом в магазин.</p>
+                <span class="feature-card__link">Сформировать →</span>
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- ============ ДОПОЛНИТЕЛЬНЫЕ ФИШКИ ============ -->
+<section class="extras">
+    <div class="container">
+        <h2 class="section-title">И это ещё не всё</h2>
+        <p class="section-subtitle">Полезные мелочи, которые делают сервис удобным</p>
+
+        <div class="extras__grid">
+            <div class="extra-card">
+                <div class="extra-card__icon">💧</div>
+                <h4 class="extra-card__title">Трекер воды</h4>
+                <p class="extra-card__desc">Виджет в углу экрана — отмечайте выпитые стаканы. Счётчик обновляется каждый день.</p>
+            </div>
+            <div class="extra-card">
+                <div class="extra-card__icon">🥗</div>
+                <h4 class="extra-card__title">Учёт диеты и аллергий</h4>
+                <p class="extra-card__desc">Вегетарианство, веганство, непереносимости — подбор рецептов с учётом ограничений.</p>
+            </div>
+            <div class="extra-card">
+                <div class="extra-card__icon">🖨</div>
+                <h4 class="extra-card__title">Печать рецептов</h4>
+                <p class="extra-card__desc">Кнопка «Распечатать» на каждом рецепте — чистая версия без меню и футера.</p>
+            </div>
+            <div class="extra-card">
+                <div class="extra-card__icon">📄</div>
+                <h4 class="extra-card__title">Экспорт в PDF</h4>
+                <p class="extra-card__desc">План питания и список покупок можно скачать в PDF — удобно в поездке.</p>
+            </div>
+            <div class="extra-card">
+                <div class="extra-card__icon">🔍</div>
+                <h4 class="extra-card__title">Умный поиск рецептов</h4>
+                <p class="extra-card__desc">Ищите по названию или описанию. Фильтры по категориям: завтраки, обед, ужин, перекусы.</p>
+            </div>
+            <div class="extra-card">
+                <div class="extra-card__icon">🩺</div>
+                <h4 class="extra-card__title">Диагностика по ИМТ</h4>
+                <p class="extra-card__desc">Калькулятор определяет состояние здоровья и даёт рекомендации по рациону.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ============ КАК ЭТО РАБОТАЕТ ============ -->
+<section class="how-it-works">
+    <div class="container">
+        <h2 class="section-title">Как это работает</h2>
+        <p class="section-subtitle">Всего 4 шага — и у вас персональный план питания</p>
+
+        <div class="steps steps--4">
+            <div class="step">
+                <div class="step__number">01</div>
+                <h3 class="step__title">Ответьте на вопросы</h3>
+                <p class="step__desc">10 шагов опроса: цель, активность, предпочтения, аллергии.</p>
+            </div>
+            <div class="step__connector"></div>
+            <div class="step">
+                <div class="step__number">02</div>
+                <h3 class="step__title">Получите расчёт</h3>
+                <p class="step__desc">Суточная норма КБЖУ, ИМТ и рекомендации от сервиса.</p>
+            </div>
+            <div class="step__connector"></div>
+            <div class="step">
+                <div class="step__number">03</div>
+                <h3 class="step__title">Готовьте по плану</h3>
+                <p class="step__desc">План на неделю составлен автоматически с учётом ваших ограничений.</p>
+            </div>
+            <div class="step__connector"></div>
+            <div class="step">
+                <div class="step__number">04</div>
+                <h3 class="step__title">Следите за прогрессом</h3>
+                <p class="step__desc">Отмечайте вес и соблюдение рациона в дневнике, смотрите динамику.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ============ СТАТИСТИКА ============ -->
+<section class="stats">
+    <div class="container">
+        <div class="stats__grid">
+            <div class="stat"><div class="stat__number">59</div><div class="stat__label">Рецептов</div></div>
+            <div class="stat"><div class="stat__number">10</div><div class="stat__label">Шагов опроса</div></div>
+            <div class="stat"><div class="stat__number">7</div><div class="stat__label">Дней плана</div></div>
+            <div class="stat"><div class="stat__number">6</div><div class="stat__label">Основных функций</div></div>
+        </div>
+    </div>
+</section>
+
+<!-- ============ ФИНАЛЬНЫЙ ПРИЗЫВ ============ -->
+<section class="final-cta">
+    <div class="container">
+        <div class="final-cta__box">
+            <h2 class="final-cta__title">Готовы начать?</h2>
+            <p class="final-cta__desc">Пройдите короткий опрос — и через минуту у вас будет план питания на неделю с учётом ваших целей и предпочтений.</p>
+            <div class="final-cta__actions">
+                <a href="quiz.html" class="btn btn--primary">Пройти опрос</a>
+                <a href="recipes.html" class="btn btn--outline">Смотреть рецепты</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<footer class="footer">
+    <div class="container footer__inner">
+        <div class="footer__brand">
+            <a href="index.html" class="logo"><span class="logo__icon">🍳</span><span class="logo__text">МойРацион</span></a>
+            <p class="footer__desc">Сервис для планирования здорового рациона питания. Дипломный проект, 2026.</p>
+        </div>
+        <div class="footer__links">
+            <h4 class="footer__heading">Навигация</h4>
+            <a href="index.html" class="footer__link">Главная</a>
+            <a href="planner.html" class="footer__link">Планировщик</a>
+            <a href="recipes.html" class="footer__link">Рецепты</a>
+            <a href="journal.html" class="footer__link">Дневник</a>
+            <a href="calculator.html" class="footer__link">Калькулятор</a>
+        </div>
+        <div class="footer__links">
+            <h4 class="footer__heading">Информация</h4>
+            <a href="quiz.html" class="footer__link">Пройти опрос</a>
+            <a href="#" class="footer__link">О проекте</a>
+            <a href="#" class="footer__link">Контакты</a>
+        </div>
+    </div>
+    <div class="container">
+        <div class="footer__bottom"><p>© 2026 МойРацион. Все права защищены.</p></div>
+    </div>
+</footer>
+
+<script src="common.js"></script>
+</body>
+</html>

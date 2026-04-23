@@ -1,0 +1,1350 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Планировщик рациона — МойРацион</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="header"><div class="container header__inner"><a href="index.html" class="logo"><span class="logo__icon">🍳</span><span class="logo__text">МойРацион</span></a><nav class="nav"><a href="index.html" class="nav__link">Главная</a><a href="planner.html" class="nav__link nav__link--active">Планировщик</a><a href="recipes.html" class="nav__link">Рецепты</a><a href="journal.html" class="nav__link">Дневник</a><a href="calculator.html" class="nav__link">Калькулятор</a></nav></div></header>
+
+<section class="page-header"><div class="container"><h1 class="page-header__title">Планировщик рациона</h1><p class="page-header__desc">Добавляйте блюда и следите за суточной нормой калорий и БЖУ</p></div></section>
+
+<section class="planner-app"><div class="container">
+
+    <!-- Настройка нормы -->
+    <div class="planner-goal">
+        <h3 class="planner-goal__title">⚙️ Ваша суточная норма</h3>
+        <div class="planner-goal__grid">
+            <div class="planner-goal__item">
+                <label>Калории (ккал)</label>
+                <input type="number" id="goal-kcal" placeholder="2000" class="form-input" onchange="updateAllDays()">
+            </div>
+            <div class="planner-goal__item">
+                <label>Белки (г)</label>
+                <input type="number" id="goal-protein" placeholder="150" class="form-input" onchange="updateAllDays()">
+            </div>
+            <div class="planner-goal__item">
+                <label>Жиры (г)</label>
+                <input type="number" id="goal-fat" placeholder="67" class="form-input" onchange="updateAllDays()">
+            </div>
+            <div class="planner-goal__item">
+                <label>Углеводы (г)</label>
+                <input type="number" id="goal-carbs" placeholder="200" class="form-input" onchange="updateAllDays()">
+            </div>
+        </div>
+        <p class="planner-goal__hint" id="goal-hint">Не знаете свою норму? <a href="calculator.html">Рассчитайте в калькуляторе →</a></p>
+    </div>
+
+    <!-- Табы + кнопка сохранения -->
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
+        <div class="day-tabs" id="day-tabs" style="flex:1;margin-bottom:0">
+        <button class="day-tab day-tab--active" onclick="switchDay(0)">Пн</button>
+        <button class="day-tab" onclick="switchDay(1)">Вт</button>
+        <button class="day-tab" onclick="switchDay(2)">Ср</button>
+        <button class="day-tab" onclick="switchDay(3)">Чт</button>
+        <button class="day-tab" onclick="switchDay(4)">Пт</button>
+        <button class="day-tab" onclick="switchDay(5)">Сб</button>
+        <button class="day-tab" onclick="switchDay(6)">Вс</button>
+    </div>
+        <button class="btn btn--outline save-pdf-btn" onclick="openShoppingList()">🛒 Список покупок</button>
+        <button class="btn btn--outline save-pdf-btn" onclick="savePDF()">📄 Сохранить PDF</button>
+    </div>
+
+    <!-- Двухколоночный layout -->
+    <div class="planner-layout">
+
+        <!-- ЛЕВАЯ КОЛОНКА: основной контент -->
+        <div class="planner-main">
+
+            <!-- Контент дня -->
+            <div class="day-content" id="day-content">
+
+                <!-- Приёмы пищи -->
+                <div class="meals-grid meals-grid--3">
+                    <div class="meal-slot" id="slot-breakfast">
+                        <div class="meal-slot__header">
+                            <h4 class="meal-slot__title">🌅 Завтрак</h4>
+                            <button class="meal-slot__add" onclick="openMealModal(currentDay, 'breakfast')">+ Добавить</button>
+                        </div>
+                        <div class="meal-slot__list" id="list-breakfast"></div>
+                    </div>
+                    <div class="meal-slot" id="slot-lunch">
+                        <div class="meal-slot__header">
+                            <h4 class="meal-slot__title">☀️ Обед</h4>
+                            <button class="meal-slot__add" onclick="openMealModal(currentDay, 'lunch')">+ Добавить</button>
+                        </div>
+                        <div class="meal-slot__list" id="list-lunch"></div>
+                    </div>
+                    <div class="meal-slot" id="slot-dinner">
+                        <div class="meal-slot__header">
+                            <h4 class="meal-slot__title">🌙 Ужин</h4>
+                            <button class="meal-slot__add" onclick="openMealModal(currentDay, 'dinner')">+ Добавить</button>
+                        </div>
+                        <div class="meal-slot__list" id="list-dinner"></div>
+                    </div>
+                </div>
+
+                <!-- Предупреждения -->
+                <div class="day-warning day-warning--over" id="day-warning-over" style="display:none">
+                    ⚠️ <span id="warning-over-text"></span>
+                </div>
+                <div class="day-warning day-warning--under" id="day-warning-under" style="display:none">
+                    💡 <span id="warning-under-text"></span>
+                    <button class="recs-btn" onclick="openNutrientRecs()">🥗 Показать что добавить</button>
+                </div>
+
+                <!-- Шкалы КБЖУ -->
+                <div class="day-progress" id="day-progress">
+                    <div class="progress-row">
+                        <div class="progress-label"><span>🔥 Калории</span><span class="progress-nums" id="prog-kcal-nums">0 / — ккал</span></div>
+                        <div class="progress-bar"><div class="progress-bar__fill progress-bar__fill--kcal" id="prog-kcal" style="width:0%"></div></div>
+                    </div>
+                    <div class="progress-row">
+                        <div class="progress-label"><span>🥩 Белки</span><span class="progress-nums" id="prog-prot-nums">0 / — г</span></div>
+                        <div class="progress-bar"><div class="progress-bar__fill progress-bar__fill--prot" id="prog-prot" style="width:0%"></div></div>
+                    </div>
+                    <div class="progress-row">
+                        <div class="progress-label"><span>🥑 Жиры</span><span class="progress-nums" id="prog-fat-nums">0 / — г</span></div>
+                        <div class="progress-bar"><div class="progress-bar__fill progress-bar__fill--fat" id="prog-fat" style="width:0%"></div></div>
+                    </div>
+                    <div class="progress-row">
+                        <div class="progress-label"><span>🍞 Углеводы</span><span class="progress-nums" id="prog-carb-nums">0 / — г</span></div>
+                        <div class="progress-bar"><div class="progress-bar__fill progress-bar__fill--carb" id="prog-carb" style="width:0%"></div></div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ПРАВАЯ КОЛОНКА: рекомендации (sticky) -->
+        <aside class="planner-sidebar">
+            <button id="recs-btn" class="recs-btn" onclick="openRecsModal()" style="display:none">💡 Рекомендации для вас</button>
+            <div class="plans-buttons">
+                <button class="plan-btn plan-btn--lose" onclick="openPlanModal('lose')">📉 План для похудения</button>
+                <button class="plan-btn plan-btn--maintain" onclick="openPlanModal('maintain')">⚖️ План для поддержания</button>
+                <button class="plan-btn plan-btn--gain" onclick="openPlanModal('gain')">💪 План для набора массы</button>
+            </div>
+        </aside>
+
+    </div>
+</div></section>
+
+<!-- Модалка выбора блюда -->
+<div class="modal-overlay" id="meal-modal" onclick="if(event.target===this)closeMealModal()">
+    <div class="modal modal--wide">
+        <div class="modal__header">
+            <h2 class="modal__title" id="meal-modal-title">Выберите блюдо</h2>
+            <button class="modal__close" onclick="closeMealModal()">✕</button>
+        </div>
+        <div class="modal__body">
+            <!-- Поиск -->
+            <input type="text" class="form-input picker-search" id="picker-search" placeholder="🔍 Поиск по названию..." oninput="filterRecipes()">
+
+            <!-- Список рецептов -->
+            <div class="picker-list" id="picker-list"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Модалка рекомендаций -->
+<div class="modal-overlay" id="recs-modal" onclick="if(event.target===this)closeRecsModal()">
+    <div class="modal">
+        <div class="modal__header">
+            <h2 class="modal__title">💡 Рекомендации для вас</h2>
+            <button class="modal__close" onclick="closeRecsModal()">✕</button>
+        </div>
+        <div class="modal__body" id="recs-modal-body"></div>
+    </div>
+</div>
+
+<!-- Модалка плана питания -->
+<div class="modal-overlay" id="plan-modal" onclick="if(event.target===this)closePlanModal()">
+    <div class="modal">
+        <div class="modal__header">
+            <h2 class="modal__title" id="plan-modal-title">План питания</h2>
+            <button class="modal__close" onclick="closePlanModal()">✕</button>
+        </div>
+        <div class="modal__body" id="plan-modal-body"></div>
+    </div>
+</div>
+
+<!-- Модалка рекомендаций по КБЖУ (при недоборе) -->
+<div class="modal-overlay" id="nutrient-recs-modal" onclick="if(event.target===this)closeNutrientRecs()">
+    <div class="modal">
+        <div class="modal__header">
+            <h2 class="modal__title">🥗 Что добавить к рациону</h2>
+            <button class="modal__close" onclick="closeNutrientRecs()">✕</button>
+        </div>
+        <div class="modal__body">
+            <p class="nrecs-intro" id="nrecs-intro"></p>
+            <div id="nrecs-list"></div>
+        </div>
+    </div>
+</div>
+
+<footer class="footer"><div class="container footer__inner"><div class="footer__brand"><a href="index.html" class="logo"><span class="logo__icon">🍳</span><span class="logo__text">МойРацион</span></a><p class="footer__desc">Сервис для планирования здорового рациона питания. Дипломный проект, 2026.</p></div><div class="footer__links"><h4 class="footer__heading">Навигация</h4><a href="index.html" class="footer__link">Главная</a><a href="planner.html" class="footer__link">Планировщик</a><a href="recipes.html" class="footer__link">Рецепты</a><a href="journal.html" class="footer__link">Дневник</a><a href="calculator.html" class="footer__link">Калькулятор</a></div><div class="footer__links"><h4 class="footer__heading">Информация</h4><a href="#" class="footer__link">О проекте</a><a href="#" class="footer__link">Контакты</a></div></div><div class="container"><div class="footer__bottom"><p>© 2026 МойРацион. Все права защищены.</p></div></div></footer>
+
+<script>
+/* ===== БАЗА РЕЦЕПТОВ С ССЫЛКАМИ ===== */
+var recipes = [
+    { name:'Овсяная каша с ягодами и мёдом', cat:'breakfast', kcal:350, prot:12, fat:8, carbs:55, href:'recipe-oatmeal.html', img:'images/oatmeal.jpg' },
+    { name:'Сырники со сметаной',            cat:'breakfast', kcal:390, prot:22, fat:16, carbs:38, href:'recipe-syrniki.html', img:'images/syrniki.jpg' },
+    { name:'Омлет с овощами и сыром',        cat:'breakfast', kcal:310, prot:22, fat:20, carbs:8, href:'recipe-omlet.html', img:'images/omlet.jpg' },
+    { name:'Смузи-боул с гранолой',          cat:'breakfast', kcal:340, prot:10, fat:9, carbs:56, href:'recipe-smoothie-bowl.html', img:'images/smoothie-bowl.jpg' },
+    { name:'Гранола с йогуртом и бананом',   cat:'breakfast', kcal:360, prot:11, fat:12, carbs:52, href:'recipe-granola.html', img:'images/granola.jpg' },
+    { name:'Куриный суп с лапшой',           cat:'lunch', kcal:420, prot:28, fat:12, carbs:48, href:'recipe-chicken-soup.html', img:'images/chicken-soup.jpg' },
+    { name:'Борщ со сметаной',               cat:'lunch', kcal:380, prot:24, fat:14, carbs:38, href:'recipe-borsch.html', img:'images/borsch.jpg' },
+    { name:'Тыквенный крем-суп',             cat:'lunch', kcal:300, prot:8, fat:14, carbs:35, href:'recipe-pumpkin-soup.html', img:'images/pumpkin-soup.jpg' },
+    { name:'Куриная грудка с рисом и овощами', cat:'lunch', kcal:420, prot:35, fat:10, carbs:45, href:'recipe-chicken-rice.html', img:'images/chicken-rice.jpg' },
+    { name:'Паста с томатным соусом и базиликом', cat:'lunch', kcal:450, prot:14, fat:12, carbs:68, href:'recipe-pasta.html', img:'images/pasta.jpg' },
+    { name:'Греческий салат с курицей',       cat:'dinner', kcal:450, prot:32, fat:28, carbs:14, href:'recipe-greek-salad.html', img:'images/greek-salad.jpg' },
+    { name:'Цезарь с креветками',             cat:'dinner', kcal:430, prot:30, fat:26, carbs:18, href:'recipe-caesar.html', img:'images/caesar.jpg' },
+    { name:'Запечённый лосось с лимоном',     cat:'dinner', kcal:390, prot:34, fat:22, carbs:6, href:'recipe-salmon.html', img:'images/salmon.jpg' },
+    { name:'Котлеты из индейки с овощами',    cat:'dinner', kcal:370, prot:28, fat:14, carbs:28, href:'recipe-turkey-cutlets.html', img:'images/turkey-cutlets.jpg' },
+    { name:'Рыба на пару с брокколи',         cat:'dinner', kcal:280, prot:30, fat:8, carbs:12, href:'recipe-steamed-fish.html', img:'images/steamed-fish.jpg' },
+    { name:'Йогурт с орехами и мёдом',       cat:'snack', kcal:180, prot:8, fat:10, carbs:14, href:'recipe-yogurt.html', img:'images/yogurt.jpg' },
+    { name:'Творожная запеканка с изюмом',    cat:'snack', kcal:220, prot:14, fat:8, carbs:24, href:'recipe-zapekanka.html', img:'images/zapekanka.jpg' },
+    { name:'Фруктовый смузи',                cat:'snack', kcal:160, prot:4, fat:2, carbs:34, href:'recipe-fruit-smoothie.html', img:'images/fruit-smoothie.jpg' },
+    { name:'Горсть миндаля с сухофруктами',  cat:'snack', kcal:200, prot:6, fat:14, carbs:16, href:'recipe-almonds.html', img:'images/almonds.jpg' },
+    { name:'Яблоко с арахисовой пастой',     cat:'snack', kcal:190, prot:5, fat:10, carbs:24, href:'recipe-apple-peanut.html', img:'images/apple-peanut.jpg' },
+    { name:'Блины с творогом и ягодами', cat:'breakfast', kcal:380, prot:14, fat:12, carbs:50, href:'recipe-bliny.html', img:'images/bliny.jpg' },
+    { name:'Каша рисовая на молоке', cat:'breakfast', kcal:320, prot:8, fat:10, carbs:48, href:'recipe-rice-porridge.html', img:'images/rice-porridge.jpg' },
+    { name:'Тосты с авокадо и яйцом', cat:'breakfast', kcal:340, prot:14, fat:20, carbs:26, href:'recipe-avocado-toast.html', img:'images/avocado-toast.jpg' },
+    { name:'Творог с мёдом и фруктами', cat:'breakfast', kcal:280, prot:18, fat:9, carbs:32, href:'recipe-cottage-cheese.html', img:'images/cottage-cheese.jpg' },
+    { name:'Яичница с тостами и зеленью', cat:'breakfast', kcal:330, prot:16, fat:18, carbs:24, href:'recipe-fried-eggs.html', img:'images/fried-eggs.jpg' },
+    { name:'Грибной суп-пюре', cat:'lunch', kcal:320, prot:10, fat:16, carbs:32, href:'recipe-mushroom-soup.html', img:'images/mushroom-soup.jpg' },
+    { name:'Плов с курицей', cat:'lunch', kcal:480, prot:22, fat:16, carbs:60, href:'recipe-plov.html', img:'images/plov.jpg' },
+    { name:'Гречка с говядиной', cat:'lunch', kcal:440, prot:30, fat:14, carbs:48, href:'recipe-buckwheat-beef.html', img:'images/buckwheat-beef.jpg' },
+    { name:'Щи из свежей капусты', cat:'lunch', kcal:350, prot:18, fat:12, carbs:38, href:'recipe-shchi.html', img:'images/shchi.jpg' },
+    { name:'Рис с овощами и соевым соусом', cat:'lunch', kcal:400, prot:12, fat:10, carbs:64, href:'recipe-fried-rice.html', img:'images/fried-rice.jpg' },
+    { name:'Куриное филе на гриле', cat:'dinner', kcal:350, prot:38, fat:12, carbs:10, href:'recipe-grilled-chicken.html', img:'images/grilled-chicken.jpg' },
+    { name:'Тушёные овощи с фасолью', cat:'dinner', kcal:260, prot:14, fat:6, carbs:38, href:'recipe-veggie-stew.html', img:'images/veggie-stew.jpg' },
+    { name:'Салат с тунцом и яйцом', cat:'dinner', kcal:380, prot:28, fat:22, carbs:12, href:'recipe-tuna-salad.html', img:'images/tuna-salad.jpg' },
+    { name:'Фаршированные перцы', cat:'dinner', kcal:400, prot:24, fat:16, carbs:36, href:'recipe-stuffed-peppers.html', img:'images/stuffed-peppers.jpg' },
+    { name:'Кабачковые оладьи со сметаной', cat:'dinner', kcal:290, prot:10, fat:14, carbs:30, href:'recipe-zucchini-fritters.html', img:'images/zucchini-fritters.jpg' },
+    { name:'Банановый хлеб', cat:'snack', kcal:240, prot:6, fat:10, carbs:34, href:'recipe-banana-bread.html', img:'images/banana-bread.jpg' },
+    { name:'Кефир с ягодами', cat:'snack', kcal:140, prot:6, fat:3, carbs:22, href:'recipe-kefir-berries.html', img:'images/kefir-berries.jpg' },
+    { name:'Морковные палочки с хумусом', cat:'snack', kcal:170, prot:6, fat:8, carbs:18, href:'recipe-carrot-hummus.html', img:'images/carrot-hummus.jpg' },
+    { name:'Овсяное печенье', cat:'snack', kcal:210, prot:4, fat:8, carbs:32, href:'recipe-oat-cookies.html', img:'images/oat-cookies.jpg' },
+    { name:'Сырники запечённые', cat:'snack', kcal:250, prot:16, fat:8, carbs:28, href:'recipe-baked-syrniki.html', img:'images/baked-syrniki.jpg' },
+    { name:'Оладьи с мёдом и сметаной', cat:'breakfast', kcal:370, prot:10, fat:14, carbs:50, href:'recipe-pancakes.html', img:'images/pancakes.jpg' },
+    { name:'Горячий бутерброд с сыром', cat:'breakfast', kcal:350, prot:16, fat:18, carbs:28, href:'recipe-cheese-sandwich.html', img:'images/cheese-sandwich.jpg' },
+    { name:'Гречневая каша с молоком', cat:'breakfast', kcal:310, prot:12, fat:8, carbs:48, href:'recipe-buckwheat-porridge.html', img:'images/buckwheat-porridge.jpg' },
+    { name:'Ролл из лаваша с яйцом и овощами', cat:'breakfast', kcal:320, prot:14, fat:16, carbs:28, href:'recipe-egg-wrap.html', img:'images/egg-wrap.jpg' },
+    { name:'Мюсли с молоком и ягодами', cat:'breakfast', kcal:340, prot:10, fat:10, carbs:52, href:'recipe-muesli-bowl.html', img:'images/muesli-bowl.jpg' },
+    { name:'Куриные котлеты с пюре', cat:'lunch', kcal:460, prot:28, fat:18, carbs:42, href:'recipe-chicken-cutlets.html', img:'images/chicken-cutlets.jpg' },
+    { name:'Уха из сёмги', cat:'lunch', kcal:360, prot:26, fat:14, carbs:28, href:'recipe-fish-soup.html', img:'images/fish-soup.jpg' },
+    { name:'Суп из чечевицы', cat:'lunch', kcal:330, prot:20, fat:8, carbs:46, href:'recipe-lentil-soup.html', img:'images/lentil-soup.jpg' },
+    { name:'Жаркое из говядины', cat:'lunch', kcal:470, prot:32, fat:20, carbs:36, href:'recipe-beef-stew.html', img:'images/beef-stew.jpg' },
+    { name:'Паста с овощами и песто', cat:'lunch', kcal:420, prot:14, fat:16, carbs:54, href:'recipe-veggie-pasta.html', img:'images/veggie-pasta.jpg' },
+    { name:'Запечённая треска с овощами', cat:'dinner', kcal:300, prot:32, fat:10, carbs:16, href:'recipe-baked-cod.html', img:'images/baked-cod.jpg' },
+    { name:'Тёплый салат с курицей и киноа', cat:'dinner', kcal:410, prot:30, fat:18, carbs:30, href:'recipe-chicken-salad.html', img:'images/chicken-salad.jpg' },
+    { name:'Ризотто с грибами', cat:'dinner', kcal:430, prot:12, fat:16, carbs:58, href:'recipe-mushroom-risotto.html', img:'images/mushroom-risotto.jpg' },
+    { name:'Рулетики из баклажанов с сыром', cat:'dinner', kcal:270, prot:14, fat:16, carbs:18, href:'recipe-eggplant-rolls.html', img:'images/eggplant-rolls.jpg' },
+    { name:'Энергетические шарики', cat:'snack', kcal:180, prot:6, fat:10, carbs:18, href:'recipe-energy-balls.html', img:'images/energy-balls.jpg' },
+    { name:'Фруктовый салат с мятой', cat:'snack', kcal:150, prot:2, fat:1, carbs:34, href:'recipe-fruit-salad.html', img:'images/fruit-salad.jpg' },
+    { name:'Сырные крекеры', cat:'snack', kcal:230, prot:10, fat:14, carbs:16, href:'recipe-cheese-crackers.html', img:'images/cheese-crackers.jpg' },
+    { name:'Чиа-пудинг с манго', cat:'snack', kcal:200, prot:6, fat:8, carbs:26, href:'recipe-chia-pudding.html', img:'images/chia-pudding.jpg' },
+    { name:'Протеиновый коктейль', cat:'snack', kcal:220, prot:20, fat:6, carbs:24, href:'recipe-protein-smoothie.html', img:'images/protein-smoothie.jpg' }
+];
+var catLabels = { breakfast:'Завтрак', lunch:'Обед', dinner:'Ужин', snack:'Перекус' };
+var days = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
+var slots = ['breakfast','lunch','dinner'];
+var currentDay = 0;
+var modalSlot = '';
+var weekData = [];
+for (var i = 0; i < 7; i++) { weekData[i] = { breakfast:[], lunch:[], dinner:[] }; }
+
+function switchDay(d) {
+    currentDay = d;
+    document.querySelectorAll('.day-tab').forEach(function(t, idx) {
+        t.className = idx === d ? 'day-tab day-tab--active' : 'day-tab';
+    });
+    renderDay();
+}
+
+function renderDay() {
+    var data = weekData[currentDay];
+    slots.forEach(function(slot) {
+        var list = document.getElementById('list-' + slot);
+        list.innerHTML = '';
+        if (data[slot].length === 0) {
+            list.innerHTML = '<div class="meal-empty">Нет блюд</div>';
+            return;
+        }
+        data[slot].forEach(function(meal, idx) {
+            var item = document.createElement('div');
+            var hasLink = !!meal.href;
+            item.className = 'meal-item' + (hasLink ? ' meal-item--link' : '');
+            if (hasLink) {
+                item.onclick = function(e) {
+                    if (!e.target.classList.contains('meal-item__del')) window.location.href = meal.href;
+                };
+            }
+            var imgHtml = meal.img
+                ? '<div class="meal-item__img" style="background-image:url(\'' + meal.img + '\')"></div>'
+                : '';
+            var badge = meal.cat === 'snack' ? '<span class="meal-item__badge">перекус</span>' : '';
+            item.innerHTML = imgHtml +
+                '<div class="meal-item__info">' +
+                    '<span class="meal-item__name">' + meal.name + badge + '</span>' +
+                    '<span class="meal-item__nums">' + meal.kcal + ' ккал' +
+                        (meal.prot ? ' · Б ' + meal.prot + 'г' : '') +
+                        (meal.fat ? ' · Ж ' + meal.fat + 'г' : '') +
+                        (meal.carbs ? ' · У ' + meal.carbs + 'г' : '') +
+                    '</span>' +
+                '</div>' +
+                '<button class="meal-item__del" onclick="event.stopPropagation();removeMeal(\'' + slot + '\',' + idx + ')">✕</button>';
+            list.appendChild(item);
+        });
+    });
+    updateProgress();
+}
+
+function getGoals() {
+    return {
+        kcal: parseInt(document.getElementById('goal-kcal').value) || 2000,
+        prot: parseInt(document.getElementById('goal-protein').value) || 150,
+        fat:  parseInt(document.getElementById('goal-fat').value) || 67,
+        carbs: parseInt(document.getElementById('goal-carbs').value) || 200
+    };
+}
+function getDayTotals(dayIdx) {
+    var data = weekData[dayIdx];
+    var totals = { kcal:0, prot:0, fat:0, carbs:0 };
+    slots.forEach(function(slot) {
+        data[slot].forEach(function(m) {
+            totals.kcal += (m.kcal||0); totals.prot += (m.prot||0);
+            totals.fat += (m.fat||0); totals.carbs += (m.carbs||0);
+        });
+    });
+    return totals;
+}
+function updateProgress() {
+    var goals = getGoals(), totals = getDayTotals(currentDay);
+    setBar('prog-kcal','prog-kcal-nums',totals.kcal,goals.kcal,'ккал');
+    setBar('prog-prot','prog-prot-nums',totals.prot,goals.prot,'г');
+    setBar('prog-fat','prog-fat-nums',totals.fat,goals.fat,'г');
+    setBar('prog-carb','prog-carb-nums',totals.carbs,goals.carbs,'г');
+    var overWarns = [];
+    if (totals.kcal > goals.kcal) overWarns.push('калорий (' + totals.kcal + ' из ' + goals.kcal + ' ккал)');
+    if (totals.prot > goals.prot) overWarns.push('белков (' + totals.prot + ' из ' + goals.prot + ' г)');
+    if (totals.fat > goals.fat) overWarns.push('жиров (' + totals.fat + ' из ' + goals.fat + ' г)');
+    if (totals.carbs > goals.carbs) overWarns.push('углеводов (' + totals.carbs + ' из ' + goals.carbs + ' г)');
+    var overEl = document.getElementById('day-warning-over');
+    if (overWarns.length > 0) {
+        document.getElementById('warning-over-text').textContent = 'Норма превышена: ' + overWarns.join(', ') + '. Попробуйте выбрать что-то полегче.';
+        overEl.style.display = 'block';
+    } else { overEl.style.display = 'none'; }
+    var underEl = document.getElementById('day-warning-under');
+    if (totals.kcal > 0 && totals.kcal < goals.kcal * 0.7) {
+        var deficit = goals.kcal - totals.kcal;
+        var uParts = ['калорий (набрано ' + totals.kcal + ' из ' + goals.kcal + ', не хватает ' + deficit + ' ккал)'];
+        if (totals.prot < goals.prot * 0.7) uParts.push('белков (' + totals.prot + ' из ' + goals.prot + ' г)');
+        if (totals.fat < goals.fat * 0.7) uParts.push('жиров (' + totals.fat + ' из ' + goals.fat + ' г)');
+        if (totals.carbs < goals.carbs * 0.7) uParts.push('углеводов (' + totals.carbs + ' из ' + goals.carbs + ' г)');
+        document.getElementById('warning-under-text').textContent = 'Недобор: ' + uParts.join(', ') + '. Добавьте ещё блюда для суточной нормы.';
+        underEl.style.display = 'block';
+    } else { underEl.style.display = 'none'; }
+    var tabs = document.querySelectorAll('.day-tab');
+    for (var i = 0; i < 7; i++) {
+        var t = getDayTotals(i);
+        if (t.kcal > 0 && i !== currentDay) tabs[i].classList.add('day-tab--filled');
+        else tabs[i].classList.remove('day-tab--filled');
+    }
+}
+function setBar(barId, numsId, current, goal, unit) {
+    var pct = goal > 0 ? (current / goal) * 100 : 0;
+    var bar = document.getElementById(barId);
+    bar.style.width = Math.min(pct, 100) + '%';
+    if (pct > 100) bar.classList.add('progress-bar__fill--over');
+    else bar.classList.remove('progress-bar__fill--over');
+    document.getElementById(numsId).textContent = current + ' / ' + goal + ' ' + unit;
+}
+function updateAllDays() { updateProgress(); }
+
+/* ===== МОДАЛКА-ПИКЕР (автофильтр: слот + перекусы) ===== */
+function openMealModal(day, slot) {
+    currentDay = day; modalSlot = slot;
+    var slotNames = { breakfast:'Завтрак', lunch:'Обед', dinner:'Ужин' };
+    document.getElementById('meal-modal-title').textContent = slotNames[slot] + ' + Перекусы (' + days[day] + ')';
+    document.getElementById('picker-search').value = '';
+    renderPicker('');
+    document.getElementById('meal-modal').classList.add('modal-overlay--open');
+    document.body.style.overflow = 'hidden';
+}
+function closeMealModal() {
+    document.getElementById('meal-modal').classList.remove('modal-overlay--open');
+    document.body.style.overflow = '';
+}
+function renderPicker(search) {
+    var list = document.getElementById('picker-list');
+    list.innerHTML = '';
+    var filtered = recipes.filter(function(r) {
+        var matchCat = (r.cat === modalSlot) || (r.cat === 'snack');
+        var matchSearch = !search || r.name.toLowerCase().indexOf(search.toLowerCase()) !== -1;
+        return matchCat && matchSearch;
+    });
+    if (filtered.length === 0) { list.innerHTML = '<div class="picker-empty">Ничего не найдено</div>'; return; }
+    var main = filtered.filter(function(r) { return r.cat === modalSlot; });
+    var snacks = filtered.filter(function(r) { return r.cat === 'snack'; });
+    var slotTitles = { breakfast:'Завтраки', lunch:'Блюда на обед', dinner:'Блюда на ужин' };
+    if (main.length > 0) {
+        var sec = document.createElement('div'); sec.className = 'picker-section';
+        sec.textContent = slotTitles[modalSlot] || ''; list.appendChild(sec);
+        main.forEach(function(r) { list.appendChild(createPickerItem(r)); });
+    }
+    if (snacks.length > 0) {
+        var sec2 = document.createElement('div'); sec2.className = 'picker-section';
+        sec2.textContent = 'Перекусы'; list.appendChild(sec2);
+        snacks.forEach(function(r) { list.appendChild(createPickerItem(r)); });
+    }
+}
+function createPickerItem(r) {
+    var item = document.createElement('div'); item.className = 'picker-item';
+    item.onclick = function() { pickRecipe(r); };
+    item.innerHTML =
+        '<div class="picker-item__info"><div class="picker-item__name">' + r.name + '</div>' +
+        '<div class="picker-item__cat">' + (catLabels[r.cat]||r.cat) + '</div></div>' +
+        '<div class="picker-item__nums"><span class="picker-item__kcal">' + r.kcal + ' ккал</span>' +
+        '<span class="picker-item__bju">Б ' + r.prot + ' · Ж ' + r.fat + ' · У ' + r.carbs + '</span></div>' +
+        '<div class="picker-item__btn">+</div>';
+    return item;
+}
+function filterRecipes() { renderPicker(document.getElementById('picker-search').value); }
+function pickRecipe(r) {
+    weekData[currentDay][modalSlot].push({ name:r.name, cat:r.cat, kcal:r.kcal, prot:r.prot, fat:r.fat, carbs:r.carbs, href:r.href||'', img:r.img||'' });
+    closeMealModal(); renderDay();
+}
+function removeMeal(slot, idx) { weekData[currentDay][slot].splice(idx, 1); renderDay(); }
+document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeMealModal(); });
+
+/* ==================== РЕКОМЕНДАЦИИ ПО КБЖУ ==================== */
+
+/* Открывает модалку с подходящими блюдами по дефициту дня */
+function openNutrientRecs() {
+    var goals = getGoals();
+    var totals = getDayTotals(currentDay);
+
+    /* Считаем недобор */
+    var deficit = {
+        kcal: Math.max(0, goals.kcal - totals.kcal),
+        prot: Math.max(0, goals.prot - totals.prot),
+        fat:  Math.max(0, goals.fat - totals.fat),
+        carbs: Math.max(0, goals.carbs - totals.carbs)
+    };
+
+    /* Определяем по какому нутриенту самый большой относительный дефицит */
+    var needProtein = deficit.prot / Math.max(1, goals.prot) > 0.3;
+    var needFat = deficit.fat / Math.max(1, goals.fat) > 0.3;
+    var needCarbs = deficit.carbs / Math.max(1, goals.carbs) > 0.3;
+
+    /* Описание дефицита */
+    var introParts = [];
+    if (deficit.kcal > 0) introParts.push('<b>' + deficit.kcal + ' ккал</b>');
+    if (needProtein) introParts.push('белков <b>' + deficit.prot + 'г</b>');
+    if (needFat) introParts.push('жиров <b>' + deficit.fat + 'г</b>');
+    if (needCarbs) introParts.push('углеводов <b>' + deficit.carbs + 'г</b>');
+
+    var intro = introParts.length > 0
+        ? 'До суточной нормы не хватает: ' + introParts.join(', ') + '. Вот подходящие блюда:'
+        : 'Недобора нет — отличная работа! 🎉';
+    document.getElementById('nrecs-intro').innerHTML = intro;
+
+    /* Отбираем рецепты: те что помещаются в оставшийся лимит ккал и закрывают недостающие нутриенты */
+    var suggestions = recipes.filter(function(r) {
+        /* Не предлагаем блюда которые переберут калории */
+        if (r.kcal > deficit.kcal + 50) return false;
+        /* Если нужен белок — ищем блюда с соотношением белка выше среднего */
+        if (needProtein && (r.prot / r.kcal) < 0.05) return false;
+        /* Аналогично для жиров */
+        if (needFat && !needProtein && (r.fat / r.kcal) < 0.025) return false;
+        /* Для углеводов */
+        if (needCarbs && !needProtein && !needFat && (r.carbs / r.kcal) < 0.08) return false;
+        return true;
+    });
+
+    /* Сортировка: сначала те что лучше всего закрывают главный дефицит */
+    var primary = needProtein ? 'prot' : (needFat ? 'fat' : (needCarbs ? 'carbs' : 'kcal'));
+    suggestions.sort(function(a, b) { return b[primary] - a[primary]; });
+
+    /* Группировка по категориям + отбор топ-3 из каждой */
+    var byCat = { breakfast: [], lunch: [], dinner: [], snack: [] };
+    suggestions.forEach(function(r) {
+        if (byCat[r.cat] && byCat[r.cat].length < 3) byCat[r.cat].push(r);
+    });
+
+    /* Рендер — сначала завтрак, потом обед, ужин, перекус */
+    var catOrder = ['breakfast', 'lunch', 'dinner', 'snack'];
+    var catNames = { breakfast:'🌅 Завтраки', lunch:'☀️ Обеды', dinner:'🌙 Ужины', snack:'🍎 Перекусы' };
+    var html = '';
+    var totalCount = catOrder.reduce(function(sum, c) { return sum + byCat[c].length; }, 0);
+
+    if (totalCount === 0) {
+        html = '<p style="text-align:center;color:var(--text-light);padding:20px">Подходящих блюд не нашлось. Попробуйте удалить что-то из дня или уменьшить целевую норму.</p>';
+    } else {
+        catOrder.forEach(function(cat) {
+            var list = byCat[cat];
+            if (list.length === 0) return;
+            html += '<h3 class="nrecs-cat-title">' + catNames[cat] + '</h3>';
+            html += '<div class="nrecs-grid">';
+            list.forEach(function(r) {
+                var img = r.img
+                    ? '<div class="nrec-item__img" style="background-image:url(\'' + r.img + '\')"></div>'
+                    : '<div class="nrec-item__img nrec-item__img--empty">🍽</div>';
+                var escName = r.name.replace(/'/g, "&apos;").replace(/"/g, '&quot;');
+                html += '<div class="nrec-item">' +
+                    img +
+                    '<div class="nrec-item__body">' +
+                        '<div class="nrec-item__name">' + r.name + '</div>' +
+                        '<div class="nrec-item__nums">' + r.kcal + ' ккал · Б' + r.prot + ' · Ж' + r.fat + ' · У' + r.carbs + '</div>' +
+                        '<button class="nrec-item__add" onclick="addRecommended(\'' + escName + '\')">+ Добавить в план</button>' +
+                    '</div>' +
+                '</div>';
+            });
+            html += '</div>';
+        });
+    }
+    document.getElementById('nrecs-list').innerHTML = html;
+
+    document.getElementById('nutrient-recs-modal').classList.add('modal-overlay--open');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeNutrientRecs() {
+    document.getElementById('nutrient-recs-modal').classList.remove('modal-overlay--open');
+    document.body.style.overflow = '';
+}
+
+/* Добавить рекомендованное блюдо в подходящий слот текущего дня */
+function addRecommended(name) {
+    /* Находим рецепт в базе */
+    var recipe = null;
+    for (var i = 0; i < recipes.length; i++) {
+        if (recipes[i].name === name) { recipe = recipes[i]; break; }
+    }
+    if (!recipe) return;
+
+    /* Если блюдо — перекус, кладём в любой слот; иначе в слот соответствующей категории */
+    var targetSlot = recipe.cat === 'snack' ? 'breakfast' : recipe.cat;
+
+    weekData[currentDay][targetSlot].push({
+        name: recipe.name, cat: recipe.cat,
+        kcal: recipe.kcal, prot: recipe.prot, fat: recipe.fat, carbs: recipe.carbs,
+        href: recipe.href || '', img: recipe.img || ''
+    });
+
+    renderDay();
+
+    /* Быстрое уведомление и закрытие */
+    var btn = event.target;
+    btn.textContent = '✓ Добавлено';
+    btn.disabled = true;
+    btn.classList.add('nrec-item__add--done');
+    setTimeout(function() {
+        /* Если после добавления недобора больше нет — закрываем модалку */
+        var g = getGoals(), t = getDayTotals(currentDay);
+        if (t.kcal >= g.kcal * 0.9) closeNutrientRecs();
+    }, 800);
+}
+
+(function() {
+    var sk = localStorage.getItem('nutriplan_kcal'), sp = localStorage.getItem('nutriplan_protein');
+    var sf = localStorage.getItem('nutriplan_fat'), sc = localStorage.getItem('nutriplan_carbs');
+    if (sk) document.getElementById('goal-kcal').value = sk;
+    if (sp) document.getElementById('goal-protein').value = sp;
+    if (sf) document.getElementById('goal-fat').value = sf;
+    if (sc) document.getElementById('goal-carbs').value = sc;
+    if (sk) document.getElementById('goal-hint').innerHTML = '✅ Данные загружены из опроса. <a href="quiz.html">Пройти заново →</a>';
+
+    /* Загрузить план питания из опросника */
+    var savedPlan = localStorage.getItem('nutriplan_weekplan');
+    if (savedPlan) {
+        try {
+            var wp = JSON.parse(savedPlan);
+            for (var d = 0; d < 7 && d < wp.length; d++) {
+                wp[d].forEach(function(m) {
+                    var slot = m.slot;
+                    if (slot === 'snack') slot = 'dinner';
+                    var full = recipes.find(function(r) { return r.name === m.name; });
+                    weekData[d][slot].push({
+                        name: m.name,
+                        cat: full ? full.cat : 'snack',
+                        kcal: full ? full.kcal : m.kcal,
+                        prot: full ? full.prot : 0,
+                        fat: full ? full.fat : 0,
+                        carbs: full ? full.carbs : 0,
+                        href: full ? full.href : '',
+                        img: full ? full.img : ''
+                    });
+                });
+            }
+        } catch(e) {}
+    }
+
+    /* Рекомендации по параметрам */
+    renderRecommendations();
+})();
+
+function renderRecommendations() {
+    var weight = parseFloat(localStorage.getItem('nutriplan_weight')) || 0;
+    var height = parseFloat(localStorage.getItem('nutriplan_height')) || 0;
+    var bmi = 0;
+    if (weight && height) bmi = weight / ((height/100) * (height/100));
+
+    var goal = localStorage.getItem('nutriplan_goal') || '';
+    var water = localStorage.getItem('nutriplan_water') || '';
+    var sleep = localStorage.getItem('nutriplan_sleep') || '';
+    var problem = localStorage.getItem('nutriplan_problem') || '';
+    var activity = localStorage.getItem('nutriplan_activity') || '';
+
+    var tips = [];
+
+    /* По ИМТ */
+    if (bmi > 0 && bmi < 18.5) {
+        tips.push({icon:'⚠️', title:'Дефицит массы тела (ИМТ ' + (Math.round(bmi*10)/10) + ')', text:'Увеличьте калорийность рациона на 300–500 ккал. Добавьте орехи, авокадо, жирную рыбу и цельные злаки. Ешьте 4–5 раз в день.', color:'#dbeafe'});
+    } else if (bmi >= 25 && bmi < 30) {
+        tips.push({icon:'⚠️', title:'Избыточный вес (ИМТ ' + (Math.round(bmi*10)/10) + ')', text:'Придерживайтесь дефицита 300–500 ккал. Увеличьте долю овощей и белка, сократите сладкое и мучное. Пейте больше воды — не менее 8 стаканов в день.', color:'#fef3c7'});
+    } else if (bmi >= 30 && bmi < 35) {
+        tips.push({icon:'🔴', title:'Ожирение I степени (ИМТ ' + (Math.round(bmi*10)/10) + ')', text:'Пейте не менее 2 литров воды в день — это ускоряет метаболизм. Исключите сладкие напитки и фастфуд. Основа рациона — белок + овощи. Начните с ходьбы 30 мин/день.', color:'#fee2e2'});
+    } else if (bmi >= 35) {
+        tips.push({icon:'🚨', title:'Ожирение II–III степени (ИМТ ' + (Math.round(bmi*10)/10) + ')', text:'Обратитесь к врачу для составления индивидуального плана. Пейте 2–2.5 литра воды. Снижайте вес постепенно — не более 0.5–1 кг в неделю. Избегайте жёстких диет.', color:'#fee2e2'});
+    } else if (bmi >= 18.5 && bmi < 25) {
+        tips.push({icon:'✅', title:'Вес в норме (ИМТ ' + (Math.round(bmi*10)/10) + ')', text:'Отличная форма! Придерживайтесь сбалансированного питания и регулярной физической активности.', color:'#dcfce7'});
+    }
+
+    /* По воде */
+    if (water === 'low') {
+        tips.push({icon:'💧', title:'Увеличьте потребление воды', text:'Вы пьёте только чай/кофе. Добавьте 6–8 стаканов чистой воды в день. Вода ускоряет обмен веществ, снижает аппетит и улучшает состояние кожи.'});
+    }
+
+    /* По сну */
+    if (sleep === 'little') {
+        tips.push({icon:'😴', title:'Нормализуйте сон', text:'Менее 6 часов сна замедляет метаболизм и усиливает тягу к сладкому. Старайтесь спать 7–8 часов и не есть за 2–3 часа до сна.'});
+    }
+
+    /* По проблемам */
+    if (problem === 'overeating') {
+        tips.push({icon:'🍽', title:'Контролируйте порции', text:'Используйте маленькие тарелки, ешьте медленно, жуйте тщательно. Перед едой выпейте стакан воды — это поможет не переесть.'});
+    } else if (problem === 'snacking') {
+        tips.push({icon:'🌙', title:'Избегайте ночных перекусов', text:'Плотно ужинайте за 3 часа до сна. Не держите сладости и чипсы дома. Если хочется есть ночью — выпейте воды или кефир.'});
+    } else if (problem === 'skipping') {
+        tips.push({icon:'⏰', title:'Не пропускайте приёмы пищи', text:'Пропуск еды замедляет обмен веществ и ведёт к перееданию вечером. Ешьте регулярно 3 раза в день + перекус.'});
+    } else if (problem === 'emotional') {
+        tips.push({icon:'🧘', title:'Замените заедание другими привычками', text:'При стрессе вместо еды попробуйте прогулку, дыхательные упражнения, горячий чай или звонок близкому человеку.'});
+    }
+
+    /* По активности */
+    if (activity === '1.2') {
+        tips.push({icon:'🚶', title:'Добавьте движения', text:'Сидячий образ жизни замедляет метаболизм. Начните с 15–20 минут ходьбы в день, постепенно увеличивая до 30–40 минут.'});
+    }
+
+    /* По цели */
+    if (goal === 'lose') {
+        tips.push({icon:'📉', title:'Совет для похудения', text:'Дефицит 500 ккал/день = −0.5 кг в неделю. Не снижайте калорийность ниже 1200 (ж) / 1500 (м) ккал. Делайте упор на белок — он дольше сохраняет чувство сытости.'});
+    } else if (goal === 'gain') {
+        tips.push({icon:'💪', title:'Совет для набора массы', text:'Профицит 300–500 ккал + силовые тренировки 3 раза в неделю. Ешьте больше белка (1.6–2 г на кг веса) и сложных углеводов.'});
+    }
+
+    if (tips.length === 0) {
+        document.getElementById('recs-btn').style.display = 'none';
+        return;
+    }
+    document.getElementById('recs-btn').style.display = 'block';
+    var html = '';
+    tips.forEach(function(t) {
+        var bg = t.color || 'var(--primary-pale)';
+        html += '<div class="rec-card" style="background:' + bg + '">' +
+            '<div class="rec-card__icon">' + t.icon + '</div>' +
+            '<div class="rec-card__body">' +
+                '<div class="rec-card__title">' + t.title + '</div>' +
+                '<div class="rec-card__text">' + t.text + '</div>' +
+            '</div></div>';
+    });
+    document.getElementById('recs-modal-body').innerHTML = html;
+}
+
+function openRecsModal() {
+    document.getElementById('recs-modal').classList.add('modal-overlay--open');
+    document.body.style.overflow = 'hidden';
+}
+function closeRecsModal() {
+    document.getElementById('recs-modal').classList.remove('modal-overlay--open');
+    document.body.style.overflow = '';
+}
+
+/* ===== ПРИМЕРНЫЕ ПЛАНЫ ПИТАНИЯ ===== */
+var samplePlans = {
+    lose: {
+        meals: [
+            {slot:'Завтрак', name:'Омлет с овощами и сыром', kcal:310, img:'images/omlet.jpg', href:'recipe-omlet.html'},
+            {slot:'Обед', name:'Тыквенный крем-суп', kcal:300, img:'images/pumpkin-soup.jpg', href:'recipe-pumpkin-soup.html'},
+            {slot:'Ужин', name:'Рыба на пару с брокколи', kcal:280, img:'images/steamed-fish.jpg', href:'recipe-steamed-fish.html'},
+            {slot:'Перекус', name:'Фруктовый смузи', kcal:160, img:'images/fruit-smoothie.jpg', href:'recipe-fruit-smoothie.html'},
+            {slot:'Перекус', name:'Йогурт с орехами и мёдом', kcal:180, img:'images/yogurt.jpg', href:'recipe-yogurt.html'}
+        ]
+    },
+    maintain: {
+        meals: [
+            {slot:'Завтрак', name:'Овсяная каша с ягодами и мёдом', kcal:350, img:'images/oatmeal.jpg', href:'recipe-oatmeal.html'},
+            {slot:'Обед', name:'Куриная грудка с рисом и овощами', kcal:420, img:'images/chicken-rice.jpg', href:'recipe-chicken-rice.html'},
+            {slot:'Ужин', name:'Греческий салат с курицей', kcal:450, img:'images/greek-salad.jpg', href:'recipe-greek-salad.html'},
+            {slot:'Перекус', name:'Гранола с йогуртом и бананом', kcal:360, img:'images/granola.jpg', href:'recipe-granola.html'},
+            {slot:'Перекус', name:'Яблоко с арахисовой пастой', kcal:190, img:'images/apple-peanut.jpg', href:'recipe-apple-peanut.html'}
+        ]
+    },
+    gain: {
+        meals: [
+            {slot:'Завтрак', name:'Сырники со сметаной', kcal:390, img:'images/syrniki.jpg', href:'recipe-syrniki.html'},
+            {slot:'Завтрак', name:'Смузи-боул с гранолой', kcal:340, img:'images/smoothie-bowl.jpg', href:'recipe-smoothie-bowl.html'},
+            {slot:'Обед', name:'Паста с томатным соусом и базиликом', kcal:450, img:'images/pasta.jpg', href:'recipe-pasta.html'},
+            {slot:'Обед', name:'Борщ со сметаной', kcal:380, img:'images/borsch.jpg', href:'recipe-borsch.html'},
+            {slot:'Ужин', name:'Цезарь с креветками', kcal:430, img:'images/caesar.jpg', href:'recipe-caesar.html'},
+            {slot:'Перекус', name:'Горсть миндаля с сухофруктами', kcal:200, img:'images/almonds.jpg', href:'recipe-almonds.html'},
+            {slot:'Перекус', name:'Творожная запеканка с изюмом', kcal:220, img:'images/zapekanka.jpg', href:'recipe-zapekanka.html'}
+        ]
+    }
+};
+
+var planTitles = {
+    lose: '📉 План для похудения (~1 230 ккал)',
+    maintain: '⚖️ План для поддержания (~1 770 ккал)',
+    gain: '💪 План для набора массы (~2 410 ккал)'
+};
+
+function openPlanModal(type) {
+    var plan = samplePlans[type];
+    document.getElementById('plan-modal-title').textContent = planTitles[type];
+    var html = '';
+    var total = 0;
+    plan.meals.forEach(function(m) {
+        total += m.kcal;
+        html += '<a href="' + m.href + '" class="sp-meal sp-meal--link">' +
+            '<div class="sp-meal__img" style="background-image:url(\'' + m.img + '\')"></div>' +
+            '<span class="sp-meal__slot">' + m.slot + '</span>' +
+            '<span class="sp-meal__name">' + m.name + '</span>' +
+            '<span class="sp-meal__kcal">' + m.kcal + ' ккал</span></a>';
+    });
+    html += '<div class="sp-total"><span>Итого</span><span>' + total + ' ккал</span></div>';
+    document.getElementById('plan-modal-body').innerHTML = html;
+    document.getElementById('plan-modal').classList.add('modal-overlay--open');
+    document.body.style.overflow = 'hidden';
+}
+function closePlanModal() {
+    document.getElementById('plan-modal').classList.remove('modal-overlay--open');
+    document.body.style.overflow = '';
+}
+
+function savePDF() {
+    var goals = getGoals();
+    var dn = ['Понедельник','Вторник','Среда','Четверг','Пятница','Суббота','Воскресенье'];
+    var sn = {breakfast:'Завтрак',lunch:'Обед',dinner:'Ужин'};
+    var h = '<html><head><meta charset="UTF-8"><title>МойРацион — План питания</title><style>' +
+        'body{font-family:Arial,sans-serif;max-width:700px;margin:0 auto;padding:20px;color:#333}' +
+        'h1{text-align:center;color:#b5651d;font-size:22px;margin-bottom:4px}' +
+        '.sub{text-align:center;color:#888;font-size:13px;margin-bottom:20px}' +
+        '.goals{display:flex;justify-content:center;gap:24px;margin-bottom:24px;padding:12px;background:#fdf8f3;border-radius:8px;font-size:13px}' +
+        '.goals b{color:#b5651d}' +
+        'h2{font-size:16px;color:#b5651d;border-bottom:2px solid #f5ebe0;padding-bottom:4px;margin:20px 0 8px}' +
+        '.ml{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #eee;font-size:13px}' +
+        '.ms{width:60px;font-weight:700;color:#b5651d;text-transform:uppercase;font-size:11px}' +
+        '.mn{flex:1}.mk{color:#888;font-weight:600}' +
+        '.tot{display:flex;justify-content:space-between;font-weight:700;color:#b5651d;padding:6px 0;border-top:2px solid #f5ebe0;margin-top:4px;font-size:13px}' +
+        '.ft{text-align:center;color:#aaa;font-size:11px;margin-top:30px;border-top:1px solid #eee;padding-top:10px}' +
+        '</style></head><body>';
+    h += '<h1>МойРацион</h1><div class="sub">Персональный план питания на неделю</div>';
+    h += '<div class="goals"><span>🔥 <b>' + goals.kcal + '</b> ккал</span><span>🥩 <b>' + goals.prot + '</b> г белков</span><span>🥑 <b>' + goals.fat + '</b> г жиров</span><span>🍞 <b>' + goals.carbs + '</b> г углеводов</span></div>';
+    for (var d = 0; d < 7; d++) {
+        var data = weekData[d], dt = 0, has = false;
+        slots.forEach(function(s) { if (data[s].length > 0) has = true; });
+        if (!has) continue;
+        h += '<h2>' + dn[d] + '</h2>';
+        slots.forEach(function(s) { data[s].forEach(function(m) {
+            dt += m.kcal;
+            var bg = m.cat === 'snack' ? ' (перекус)' : '';
+            h += '<div class="ml"><span class="ms">' + sn[s] + '</span><span class="mn">' + m.name + bg + '</span><span class="mk">' + m.kcal + ' ккал</span></div>';
+        }); });
+        h += '<div class="tot"><span>Итого</span><span>' + dt + ' ккал</span></div>';
+    }
+    h += '<div class="ft">МойРацион • ' + new Date().toLocaleDateString('ru-RU') + '</div></body></html>';
+    var w = window.open('','_blank');
+    w.document.write(h); w.document.close();
+    setTimeout(function() { w.print(); }, 500);
+}
+
+renderDay();
+
+/* ==================== СПИСОК ПОКУПОК ==================== */
+
+/* База ингредиентов по рецептам (название блюда -> [ингредиенты]) */
+/* unit: g=грамм, ml=мл, piece=шт, tbsp=ст.л., tsp=ч.л., bunch=пучок, to_taste=по вкусу */
+var recipeIngredients = {
+    'Овсяная каша с ягодами и мёдом': [
+        {name:'Овсяные хлопья', amount:60, unit:'g'},
+        {name:'Молоко 2.5%', amount:200, unit:'ml'},
+        {name:'Ягоды', amount:80, unit:'g'},
+        {name:'Мёд', amount:1, unit:'tsp'}
+    ],
+    'Сырники со сметаной': [
+        {name:'Творог 9%', amount:400, unit:'g'},
+        {name:'Яйцо', amount:1, unit:'piece'},
+        {name:'Сахар', amount:2, unit:'tbsp'},
+        {name:'Мука', amount:3, unit:'tbsp'},
+        {name:'Сметана 15%', amount:4, unit:'tbsp'}
+    ],
+    'Омлет с овощами и сыром': [
+        {name:'Яйцо', amount:3, unit:'piece'},
+        {name:'Молоко 2.5%', amount:50, unit:'ml'},
+        {name:'Болгарский перец', amount:0.5, unit:'piece'},
+        {name:'Томаты черри', amount:4, unit:'piece'},
+        {name:'Шпинат', amount:30, unit:'g'},
+        {name:'Сыр', amount:30, unit:'g'}
+    ],
+    'Смузи-боул с гранолой': [
+        {name:'Банан', amount:1, unit:'piece'},
+        {name:'Замороженные ягоды', amount:100, unit:'g'},
+        {name:'Йогурт натуральный', amount:100, unit:'ml'},
+        {name:'Молоко 2.5%', amount:50, unit:'ml'},
+        {name:'Гранола', amount:30, unit:'g'}
+    ],
+    'Гранола с йогуртом и бананом': [
+        {name:'Гранола', amount:60, unit:'g'},
+        {name:'Йогурт натуральный', amount:150, unit:'ml'},
+        {name:'Банан', amount:1, unit:'piece'},
+        {name:'Мёд', amount:1, unit:'tsp'}
+    ],
+    'Блины с творогом и ягодами': [
+        {name:'Мука', amount:150, unit:'g'},
+        {name:'Молоко 2.5%', amount:300, unit:'ml'},
+        {name:'Яйцо', amount:2, unit:'piece'},
+        {name:'Творог 9%', amount:200, unit:'g'},
+        {name:'Ягоды', amount:100, unit:'g'}
+    ],
+    'Каша рисовая на молоке': [
+        {name:'Рис круглый', amount:100, unit:'g'},
+        {name:'Молоко 2.5%', amount:400, unit:'ml'},
+        {name:'Масло сливочное', amount:20, unit:'g'},
+        {name:'Сахар', amount:1, unit:'tbsp'}
+    ],
+    'Тосты с авокадо и яйцом': [
+        {name:'Хлеб цельнозерновой', amount:2, unit:'piece'},
+        {name:'Авокадо', amount:1, unit:'piece'},
+        {name:'Яйцо', amount:1, unit:'piece'}
+    ],
+    'Творог с мёдом и фруктами': [
+        {name:'Творог 5%', amount:200, unit:'g'},
+        {name:'Мёд', amount:1, unit:'tbsp'},
+        {name:'Банан', amount:0.5, unit:'piece'},
+        {name:'Ягоды', amount:50, unit:'g'}
+    ],
+    'Яичница с тостами и зеленью': [
+        {name:'Яйцо', amount:2, unit:'piece'},
+        {name:'Хлеб', amount:2, unit:'piece'},
+        {name:'Масло сливочное', amount:5, unit:'g'}
+    ],
+    'Оладьи с мёдом и сметаной': [
+        {name:'Кефир', amount:250, unit:'ml'},
+        {name:'Мука', amount:200, unit:'g'},
+        {name:'Яйцо', amount:1, unit:'piece'},
+        {name:'Мёд', amount:2, unit:'tbsp'}
+    ],
+    'Горячий бутерброд с сыром': [
+        {name:'Хлеб', amount:2, unit:'piece'},
+        {name:'Сыр', amount:60, unit:'g'},
+        {name:'Масло сливочное', amount:10, unit:'g'},
+        {name:'Помидор', amount:1, unit:'piece'}
+    ],
+    'Гречневая каша с молоком': [
+        {name:'Гречка', amount:150, unit:'g'},
+        {name:'Молоко 2.5%', amount:200, unit:'ml'},
+        {name:'Масло сливочное', amount:15, unit:'g'},
+        {name:'Сахар', amount:1, unit:'tbsp'}
+    ],
+    'Ролл из лаваша с яйцом и овощами': [
+        {name:'Лаваш тонкий', amount:1, unit:'piece'},
+        {name:'Яйцо', amount:2, unit:'piece'},
+        {name:'Огурец', amount:1, unit:'piece'},
+        {name:'Сыр', amount:30, unit:'g'}
+    ],
+    'Мюсли с молоком и ягодами': [
+        {name:'Мюсли', amount:80, unit:'g'},
+        {name:'Молоко 2.5%', amount:200, unit:'ml'},
+        {name:'Ягоды', amount:50, unit:'g'}
+    ],
+    'Куриный суп с лапшой': [
+        {name:'Куриные бёдра', amount:500, unit:'g'},
+        {name:'Картофель', amount:3, unit:'piece'},
+        {name:'Морковь', amount:1, unit:'piece'},
+        {name:'Лук', amount:1, unit:'piece'},
+        {name:'Мука', amount:100, unit:'g'},
+        {name:'Яйцо', amount:1, unit:'piece'}
+    ],
+    'Борщ со сметаной': [
+        {name:'Говядина на кости', amount:500, unit:'g'},
+        {name:'Свёкла', amount:2, unit:'piece'},
+        {name:'Капуста', amount:300, unit:'g'},
+        {name:'Картофель', amount:3, unit:'piece'},
+        {name:'Морковь', amount:1, unit:'piece'},
+        {name:'Томатная паста', amount:2, unit:'tbsp'},
+        {name:'Чеснок', amount:3, unit:'piece'}
+    ],
+    'Тыквенный крем-суп': [
+        {name:'Тыква', amount:500, unit:'g'},
+        {name:'Картофель', amount:2, unit:'piece'},
+        {name:'Лук', amount:1, unit:'piece'},
+        {name:'Сливки 20%', amount:100, unit:'ml'},
+        {name:'Тыквенные семечки', amount:20, unit:'g'}
+    ],
+    'Куриная грудка с рисом и овощами': [
+        {name:'Куриная грудка', amount:300, unit:'g'},
+        {name:'Рис бурый', amount:150, unit:'g'},
+        {name:'Брокколи', amount:150, unit:'g'},
+        {name:'Морковь', amount:1, unit:'piece'},
+        {name:'Соевый соус', amount:2, unit:'tbsp'}
+    ],
+    'Паста с томатным соусом и базиликом': [
+        {name:'Спагетти', amount:200, unit:'g'},
+        {name:'Томаты в собственном соку', amount:400, unit:'g'},
+        {name:'Чеснок', amount:3, unit:'piece'},
+        {name:'Масло оливковое', amount:2, unit:'tbsp'},
+        {name:'Пармезан', amount:30, unit:'g'}
+    ],
+    'Грибной суп-пюре': [
+        {name:'Шампиньоны', amount:400, unit:'g'},
+        {name:'Картофель', amount:2, unit:'piece'},
+        {name:'Лук', amount:1, unit:'piece'},
+        {name:'Сливки 20%', amount:100, unit:'ml'}
+    ],
+    'Плов с курицей': [
+        {name:'Рис', amount:300, unit:'g'},
+        {name:'Курица', amount:400, unit:'g'},
+        {name:'Морковь', amount:2, unit:'piece'},
+        {name:'Лук', amount:1, unit:'piece'}
+    ],
+    'Гречка с говядиной': [
+        {name:'Гречка', amount:200, unit:'g'},
+        {name:'Говядина', amount:300, unit:'g'},
+        {name:'Лук', amount:1, unit:'piece'},
+        {name:'Морковь', amount:1, unit:'piece'}
+    ],
+    'Щи из свежей капусты': [
+        {name:'Капуста', amount:300, unit:'g'},
+        {name:'Картофель', amount:3, unit:'piece'},
+        {name:'Говядина', amount:300, unit:'g'},
+        {name:'Морковь', amount:1, unit:'piece'},
+        {name:'Лук', amount:1, unit:'piece'}
+    ],
+    'Рис с овощами и соевым соусом': [
+        {name:'Рис', amount:200, unit:'g'},
+        {name:'Перец болгарский', amount:1, unit:'piece'},
+        {name:'Горошек', amount:100, unit:'g'},
+        {name:'Соевый соус', amount:2, unit:'tbsp'},
+        {name:'Яйцо', amount:1, unit:'piece'}
+    ],
+    'Куриные котлеты с пюре': [
+        {name:'Куриный фарш', amount:400, unit:'g'},
+        {name:'Лук', amount:1, unit:'piece'},
+        {name:'Хлеб', amount:50, unit:'g'},
+        {name:'Картофель', amount:500, unit:'g'},
+        {name:'Молоко 2.5%', amount:100, unit:'ml'}
+    ],
+    'Уха из сёмги': [
+        {name:'Сёмга', amount:400, unit:'g'},
+        {name:'Картофель', amount:3, unit:'piece'},
+        {name:'Морковь', amount:1, unit:'piece'},
+        {name:'Лук', amount:1, unit:'piece'}
+    ],
+    'Суп из чечевицы': [
+        {name:'Чечевица красная', amount:200, unit:'g'},
+        {name:'Морковь', amount:1, unit:'piece'},
+        {name:'Лук', amount:1, unit:'piece'}
+    ],
+    'Жаркое из говядины': [
+        {name:'Говядина', amount:500, unit:'g'},
+        {name:'Картофель', amount:4, unit:'piece'},
+        {name:'Морковь', amount:2, unit:'piece'},
+        {name:'Лук', amount:1, unit:'piece'}
+    ],
+    'Паста с овощами и песто': [
+        {name:'Пенне', amount:200, unit:'g'},
+        {name:'Цукини', amount:1, unit:'piece'},
+        {name:'Томаты черри', amount:150, unit:'g'},
+        {name:'Песто', amount:3, unit:'tbsp'}
+    ],
+    'Греческий салат с курицей': [
+        {name:'Куриная грудка', amount:200, unit:'g'},
+        {name:'Помидор', amount:2, unit:'piece'},
+        {name:'Огурец', amount:1, unit:'piece'},
+        {name:'Перец болгарский', amount:1, unit:'piece'},
+        {name:'Сыр фета', amount:100, unit:'g'},
+        {name:'Маслины', amount:50, unit:'g'},
+        {name:'Масло оливковое', amount:2, unit:'tbsp'}
+    ],
+    'Цезарь с креветками': [
+        {name:'Креветки очищенные', amount:250, unit:'g'},
+        {name:'Салат романо', amount:200, unit:'g'},
+        {name:'Пармезан', amount:50, unit:'g'},
+        {name:'Хлеб', amount:2, unit:'piece'},
+        {name:'Чеснок', amount:2, unit:'piece'},
+        {name:'Масло оливковое', amount:3, unit:'tbsp'}
+    ],
+    'Запечённый лосось с лимоном': [
+        {name:'Филе лосося', amount:400, unit:'g'},
+        {name:'Лимон', amount:1, unit:'piece'},
+        {name:'Чеснок', amount:2, unit:'piece'},
+        {name:'Масло оливковое', amount:1, unit:'tbsp'}
+    ],
+    'Котлеты из индейки с овощами': [
+        {name:'Филе индейки', amount:500, unit:'g'},
+        {name:'Лук', amount:1, unit:'piece'},
+        {name:'Яйцо', amount:1, unit:'piece'},
+        {name:'Хлебные крошки', amount:3, unit:'tbsp'},
+        {name:'Кабачок', amount:1, unit:'piece'},
+        {name:'Перец болгарский', amount:1, unit:'piece'}
+    ],
+    'Рыба на пару с брокколи': [
+        {name:'Филе трески', amount:400, unit:'g'},
+        {name:'Брокколи', amount:300, unit:'g'},
+        {name:'Лимон', amount:0.5, unit:'piece'},
+        {name:'Масло оливковое', amount:1, unit:'tbsp'}
+    ],
+    'Йогурт с орехами и мёдом': [
+        {name:'Йогурт натуральный', amount:150, unit:'ml'},
+        {name:'Грецкие орехи', amount:20, unit:'g'},
+        {name:'Мёд', amount:1, unit:'tsp'}
+    ],
+    'Творожная запеканка с изюмом': [
+        {name:'Творог 9%', amount:500, unit:'g'},
+        {name:'Яйцо', amount:2, unit:'piece'},
+        {name:'Сахар', amount:3, unit:'tbsp'},
+        {name:'Манная крупа', amount:3, unit:'tbsp'},
+        {name:'Изюм', amount:50, unit:'g'}
+    ],
+    'Фруктовый смузи': [
+        {name:'Банан', amount:1, unit:'piece'},
+        {name:'Клубника', amount:100, unit:'g'},
+        {name:'Апельсиновый сок', amount:150, unit:'ml'},
+        {name:'Мёд', amount:1, unit:'tsp'}
+    ],
+    'Горсть миндаля с сухофруктами': [
+        {name:'Миндаль', amount:20, unit:'g'},
+        {name:'Кешью', amount:10, unit:'g'},
+        {name:'Курага', amount:15, unit:'g'},
+        {name:'Чернослив', amount:15, unit:'g'}
+    ],
+    'Яблоко с арахисовой пастой': [
+        {name:'Яблоко', amount:1, unit:'piece'},
+        {name:'Арахисовая паста', amount:1, unit:'tbsp'}
+    ],
+    'Куриное филе на гриле': [
+        {name:'Куриное филе', amount:400, unit:'g'},
+        {name:'Лимон', amount:0.5, unit:'piece'},
+        {name:'Масло оливковое', amount:1, unit:'tbsp'}
+    ],
+    'Тушёные овощи с фасолью': [
+        {name:'Кабачок', amount:1, unit:'piece'},
+        {name:'Перец болгарский', amount:2, unit:'piece'},
+        {name:'Фасоль', amount:200, unit:'g'},
+        {name:'Помидор', amount:3, unit:'piece'}
+    ],
+    'Салат с тунцом и яйцом': [
+        {name:'Тунец консервированный', amount:1, unit:'piece'},
+        {name:'Яйцо', amount:2, unit:'piece'},
+        {name:'Салат романо', amount:100, unit:'g'},
+        {name:'Маслины', amount:50, unit:'g'}
+    ],
+    'Фаршированные перцы': [
+        {name:'Перец болгарский', amount:6, unit:'piece'},
+        {name:'Фарш', amount:400, unit:'g'},
+        {name:'Рис', amount:100, unit:'g'},
+        {name:'Томатная паста', amount:2, unit:'tbsp'}
+    ],
+    'Кабачковые оладьи со сметаной': [
+        {name:'Кабачок', amount:2, unit:'piece'},
+        {name:'Яйцо', amount:1, unit:'piece'},
+        {name:'Мука', amount:3, unit:'tbsp'},
+        {name:'Чеснок', amount:2, unit:'piece'},
+        {name:'Сметана 15%', amount:3, unit:'tbsp'}
+    ],
+    'Банановый хлеб': [
+        {name:'Банан', amount:3, unit:'piece'},
+        {name:'Мука', amount:200, unit:'g'},
+        {name:'Яйцо', amount:2, unit:'piece'},
+        {name:'Масло сливочное', amount:80, unit:'g'},
+        {name:'Грецкие орехи', amount:50, unit:'g'}
+    ],
+    'Кефир с ягодами': [
+        {name:'Кефир', amount:250, unit:'ml'},
+        {name:'Ягоды', amount:100, unit:'g'}
+    ],
+    'Морковные палочки с хумусом': [
+        {name:'Морковь', amount:2, unit:'piece'},
+        {name:'Нут', amount:150, unit:'g'},
+        {name:'Лимон', amount:0.5, unit:'piece'}
+    ],
+    'Овсяное печенье': [
+        {name:'Овсяные хлопья', amount:200, unit:'g'},
+        {name:'Масло сливочное', amount:80, unit:'g'},
+        {name:'Мёд', amount:3, unit:'tbsp'},
+        {name:'Изюм', amount:50, unit:'g'}
+    ],
+    'Сырники запечённые': [
+        {name:'Творог 9%', amount:400, unit:'g'},
+        {name:'Яйцо', amount:1, unit:'piece'},
+        {name:'Мука', amount:3, unit:'tbsp'},
+        {name:'Сахар', amount:2, unit:'tbsp'}
+    ],
+    'Запечённая треска с овощами': [
+        {name:'Филе трески', amount:400, unit:'g'},
+        {name:'Кабачок', amount:1, unit:'piece'},
+        {name:'Помидор', amount:2, unit:'piece'},
+        {name:'Лимон', amount:0.5, unit:'piece'}
+    ],
+    'Тёплый салат с курицей и киноа': [
+        {name:'Куриная грудка', amount:250, unit:'g'},
+        {name:'Киноа', amount:100, unit:'g'},
+        {name:'Руккола', amount:50, unit:'g'},
+        {name:'Авокадо', amount:0.5, unit:'piece'}
+    ],
+    'Ризотто с грибами': [
+        {name:'Рис арборио', amount:200, unit:'g'},
+        {name:'Шампиньоны', amount:200, unit:'g'},
+        {name:'Пармезан', amount:40, unit:'g'}
+    ],
+    'Рулетики из баклажанов с сыром': [
+        {name:'Баклажаны', amount:2, unit:'piece'},
+        {name:'Творожный сыр', amount:150, unit:'g'},
+        {name:'Чеснок', amount:2, unit:'piece'}
+    ],
+    'Энергетические шарики': [
+        {name:'Финики', amount:100, unit:'g'},
+        {name:'Орехи', amount:80, unit:'g'},
+        {name:'Какао', amount:2, unit:'tbsp'},
+        {name:'Кокосовая стружка', amount:30, unit:'g'}
+    ],
+    'Фруктовый салат с мятой': [
+        {name:'Яблоко', amount:1, unit:'piece'},
+        {name:'Киви', amount:2, unit:'piece'},
+        {name:'Апельсин', amount:1, unit:'piece'}
+    ],
+    'Сырные крекеры': [
+        {name:'Сыр', amount:100, unit:'g'},
+        {name:'Мука', amount:100, unit:'g'},
+        {name:'Масло сливочное', amount:50, unit:'g'}
+    ],
+    'Чиа-пудинг с манго': [
+        {name:'Семена чиа', amount:30, unit:'g'},
+        {name:'Кокосовое молоко', amount:200, unit:'ml'},
+        {name:'Манго', amount:0.5, unit:'piece'},
+        {name:'Мёд', amount:1, unit:'tsp'}
+    ],
+    'Протеиновый коктейль': [
+        {name:'Молоко 2.5%', amount:250, unit:'ml'},
+        {name:'Банан', amount:1, unit:'piece'},
+        {name:'Арахисовая паста', amount:1, unit:'tbsp'},
+        {name:'Овсяные хлопья', amount:2, unit:'tbsp'}
+    ]
+};
+
+function unitLabel(unit) {
+    var map = {g:'г', ml:'мл', piece:'шт', tbsp:'ст.л.', tsp:'ч.л.', bunch:'пучок'};
+    return map[unit] || unit;
+}
+
+function formatAmount(amount, unit) {
+    if (unit === 'piece') {
+        /* Для штук округляем вверх до целого, но если дробное — показываем как есть */
+        if (amount === Math.floor(amount)) return amount + ' шт';
+        return amount.toFixed(1) + ' шт';
+    }
+    /* Для грамм/мл — округляем до целого */
+    if (unit === 'g' || unit === 'ml') return Math.round(amount) + ' ' + unitLabel(unit);
+    /* Ст.л./ч.л. — одна цифра после запятой */
+    return amount.toFixed(1).replace('.0', '') + ' ' + unitLabel(unit);
+}
+
+/* Группировка ингредиентов в категории (для удобства похода в магазин) */
+var productCategories = {
+    '🥩 Мясо и рыба': ['Куриные бёдра','Куриная грудка','Куриный фарш','Курица','Говядина','Говядина на кости','Филе индейки','Филе лосося','Сёмга','Филе трески','Креветки очищенные'],
+    '🥛 Молочные продукты и яйца': ['Молоко 2.5%','Творог 9%','Творог 5%','Йогурт натуральный','Кефир','Сливки 20%','Сметана 15%','Сыр','Сыр фета','Пармезан','Масло сливочное','Яйцо'],
+    '🥬 Овощи и зелень': ['Картофель','Морковь','Лук','Чеснок','Свёкла','Капуста','Помидор','Томаты черри','Огурец','Перец болгарский','Шпинат','Салат романо','Брокколи','Тыква','Цукини','Кабачок','Шампиньоны'],
+    '🍎 Фрукты и ягоды': ['Банан','Яблоко','Лимон','Ягоды','Клубника','Замороженные ягоды','Авокадо','Апельсиновый сок','Изюм','Курага','Чернослив'],
+    '🌾 Крупы и мучное': ['Овсяные хлопья','Рис','Рис круглый','Рис бурый','Гречка','Чечевица красная','Мука','Хлеб','Хлеб цельнозерновой','Лаваш тонкий','Спагетти','Пенне','Хлебные крошки','Манная крупа','Гранола','Мюсли'],
+    '🥜 Прочее': ['Мёд','Сахар','Масло оливковое','Соевый соус','Томаты в собственном соку','Томатная паста','Песто','Маслины','Грецкие орехи','Миндаль','Кешью','Тыквенные семечки','Арахисовая паста','Горошек']
+};
+
+function getCategory(name) {
+    for (var cat in productCategories) {
+        if (productCategories[cat].indexOf(name) !== -1) return cat;
+    }
+    return '🛒 Другое';
+}
+
+/* Подсчитывает все ингредиенты всей недели.
+   Возвращает объект { items, missing } где missing — имена блюд без ингредиентов в базе */
+function calculateShoppingList() {
+    var totals = {}; /* name -> {amount, unit} */
+    var missingSet = {}; /* имена блюд без ингредиентов (uniq) */
+
+    /* Обходим все 7 дней */
+    weekData.forEach(function(day) {
+        /* В каждом дне 3 слота: breakfast, lunch, dinner */
+        ['breakfast', 'lunch', 'dinner'].forEach(function(slot) {
+            var meals = day[slot] || [];
+            meals.forEach(function(meal) {
+                var ingr = recipeIngredients[meal.name];
+                if (!ingr) {
+                    /* Блюдо есть в плане, но нет в базе ингредиентов (например, пользователь добавил свой рецепт) */
+                    missingSet[meal.name] = true;
+                    return;
+                }
+                ingr.forEach(function(i) {
+                    var key = i.name + '|' + i.unit;
+                    if (!totals[key]) totals[key] = {name:i.name, amount:0, unit:i.unit};
+                    totals[key].amount += i.amount;
+                });
+            });
+        });
+    });
+
+    return { items: Object.values(totals), missing: Object.keys(missingSet) };
+}
+
+/* Открывает модалку со списком покупок */
+function openShoppingList() {
+    var result = calculateShoppingList();
+    var items = result.items;
+    var missing = result.missing;
+
+    if (items.length === 0 && missing.length === 0) {
+        alert('Добавьте блюда в план на неделю, чтобы сформировать список покупок.');
+        return;
+    }
+
+    /* Группировка по категориям */
+    var grouped = {};
+    items.forEach(function(item) {
+        var cat = getCategory(item.name);
+        if (!grouped[cat]) grouped[cat] = [];
+        grouped[cat].push(item);
+    });
+
+    /* Сортируем ингредиенты внутри категории по названию */
+    Object.keys(grouped).forEach(function(cat) {
+        grouped[cat].sort(function(a,b) { return a.name.localeCompare(b.name); });
+    });
+
+    /* Собираем HTML */
+    var html = '';
+    var categoryOrder = ['🥩 Мясо и рыба','🥛 Молочные продукты и яйца','🥬 Овощи и зелень','🍎 Фрукты и ягоды','🌾 Крупы и мучное','🥜 Прочее','🛒 Другое'];
+    categoryOrder.forEach(function(cat) {
+        if (!grouped[cat]) return;
+        html += '<div class="shop-cat"><h4 class="shop-cat__title">' + cat + '</h4><ul class="shop-list">';
+        grouped[cat].forEach(function(item) {
+            html += '<li class="shop-item"><label><input type="checkbox" class="shop-check"><span class="shop-item__name">' + item.name + '</span><span class="shop-item__amount">' + formatAmount(item.amount, item.unit) + '</span></label></li>';
+        });
+        html += '</ul></div>';
+    });
+
+    /* Предупреждение про рецепты без ингредиентов */
+    var warningHtml = '';
+    if (missing.length > 0) {
+        warningHtml =
+            '<div class="shop-warning">' +
+                '<strong>⚠️ Внимание!</strong> ' +
+                'В плане есть ' + missing.length + ' ' + (missing.length === 1 ? 'блюдо' : 'блюд') +
+                ' без ингредиентов в базе — они не попали в список:<ul>' +
+                missing.map(function(n) { return '<li>' + n + '</li>'; }).join('') +
+            '</ul>Ингредиенты для таких блюд нужно добавить вручную.</div>';
+    }
+
+    /* Создаём модалку */
+    var modal = document.createElement('div');
+    modal.className = 'shopping-modal';
+    modal.innerHTML =
+        '<div class="shopping-modal__overlay" onclick="closeShoppingList()"></div>' +
+        '<div class="shopping-modal__content">' +
+            '<div class="shopping-modal__header">' +
+                '<h2 class="shopping-modal__title">🛒 Список покупок на неделю</h2>' +
+                '<button class="shopping-modal__close" onclick="closeShoppingList()">✕</button>' +
+            '</div>' +
+            '<p class="shopping-modal__hint">Отмечайте пункты по мере покупки. Данные не сохраняются — это для удобства в магазине.</p>' +
+            '<div class="shopping-modal__body">' + warningHtml + html + '</div>' +
+            '<div class="shopping-modal__footer">' +
+                '<button class="btn btn--outline" onclick="closeShoppingList()">Закрыть</button>' +
+                '<button class="btn btn--primary" onclick="downloadShoppingPDF()">📄 Скачать PDF</button>' +
+            '</div>' +
+        '</div>';
+    document.body.appendChild(modal);
+    document.body.style.overflow = 'hidden';
+    setTimeout(function() { modal.classList.add('shopping-modal--open'); }, 10);
+}
+
+function closeShoppingList() {
+    var modal = document.querySelector('.shopping-modal');
+    if (!modal) return;
+    modal.classList.remove('shopping-modal--open');
+    document.body.style.overflow = '';
+    setTimeout(function() { modal.remove(); }, 300);
+}
+
+/* Скачивание PDF через window.print */
+function downloadShoppingPDF() {
+    var result = calculateShoppingList();
+    var items = result.items;
+    var grouped = {};
+    items.forEach(function(item) {
+        var cat = getCategory(item.name);
+        if (!grouped[cat]) grouped[cat] = [];
+        grouped[cat].push(item);
+    });
+    Object.keys(grouped).forEach(function(cat) {
+        grouped[cat].sort(function(a,b) { return a.name.localeCompare(b.name); });
+    });
+
+    var categoryOrder = ['🥩 Мясо и рыба','🥛 Молочные продукты и яйца','🥬 Овощи и зелень','🍎 Фрукты и ягоды','🌾 Крупы и мучное','🥜 Прочее','🛒 Другое'];
+    var body = '';
+    categoryOrder.forEach(function(cat) {
+        if (!grouped[cat]) return;
+        body += '<div class="cat"><h2>' + cat + '</h2><ul>';
+        grouped[cat].forEach(function(item) {
+            body += '<li><span class="dot"></span><span class="n">' + item.name + '</span><span class="a">' + formatAmount(item.amount, item.unit) + '</span></li>';
+        });
+        body += '</ul></div>';
+    });
+
+    var now = new Date();
+    var dateStr = now.getDate() + '.' + String(now.getMonth()+1).padStart(2,'0') + '.' + now.getFullYear();
+
+    var w = window.open('', '_blank');
+    w.document.write(
+        '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Список покупок</title>' +
+        '<style>' +
+        'body{font-family:Georgia,serif;max-width:700px;margin:40px auto;padding:0 30px;color:#2d241b}' +
+        'h1{font-size:28px;text-align:center;margin-bottom:4px}' +
+        '.sub{text-align:center;color:#8b7355;font-size:13px;margin-bottom:30px}' +
+        '.cat{margin-bottom:28px;page-break-inside:avoid}' +
+        'h2{font-size:17px;color:#b5651d;border-bottom:2px solid #f5ede0;padding-bottom:6px;margin-bottom:12px}' +
+        'ul{list-style:none;padding:0;margin:0}' +
+        'li{display:flex;align-items:center;padding:8px 0;border-bottom:1px dotted #e5e0d6;font-size:14px}' +
+        '.dot{width:14px;height:14px;border:1.5px solid #b5651d;border-radius:3px;margin-right:12px;flex-shrink:0}' +
+        '.n{flex:1}' +
+        '.a{color:#8b7355;font-weight:600;font-size:13px}' +
+        '.footer{text-align:center;margin-top:40px;color:#8b7355;font-size:12px;font-style:italic}' +
+        '@media print{body{margin:20px}}' +
+        '</style></head><body>' +
+        '<h1>🛒 Список покупок</h1>' +
+        '<p class="sub">МойРацион • сформирован ' + dateStr + '</p>' +
+        body +
+        '<p class="footer">Приятных покупок!</p>' +
+        '</body></html>'
+    );
+    w.document.close();
+    setTimeout(function() { w.print(); }, 300);
+}
+</script>
+<script src="common.js"></script>
+</body>
+</html>

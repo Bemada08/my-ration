@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Калькулятор калорий — МойРацион</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="header"><div class="container header__inner"><a href="index.html" class="logo"><span class="logo__icon">🍳</span><span class="logo__text">МойРацион</span></a><nav class="nav"><a href="index.html" class="nav__link">Главная</a><a href="planner.html" class="nav__link">Планировщик</a><a href="recipes.html" class="nav__link">Рецепты</a><a href="journal.html" class="nav__link">Дневник</a><a href="calculator.html" class="nav__link nav__link--active">Калькулятор</a></nav></div></header>
+
+<section class="page-header"><div class="container"><h1 class="page-header__title">Калькулятор калорий</h1><p class="page-header__desc">Рассчитайте суточную норму и индекс массы тела</p></div></section>
+
+<section class="calculator"><div class="container"><div class="calculator__inner">
+<div class="calc-card">
+    <h2 class="calc-card__title">Ваши параметры</h2>
+    <p class="calc-card__desc">Заполните данные и нажмите «Рассчитать»</p>
+
+    <div class="form-grid">
+        <!-- Пол -->
+        <div class="form-group form-group--full">
+            <label class="form-label">Пол</label>
+            <div class="radio-group">
+                <span class="radio-tab radio-tab--active" id="gender-male" onclick="selectGender('male')">Мужской</span>
+                <span class="radio-tab" id="gender-female" onclick="selectGender('female')">Женский</span>
+            </div>
+        </div>
+
+        <!-- Возраст, Вес, Рост -->
+        <div class="form-group">
+            <label class="form-label">Возраст</label>
+            <input type="number" class="form-input" id="age" min="14" max="100">
+        </div>
+        <div class="form-group">
+            <label class="form-label">Вес (кг)</label>
+            <input type="number" class="form-input" id="weight" min="30" max="300">
+        </div>
+        <div class="form-group">
+            <label class="form-label">Рост (см)</label>
+            <input type="number" class="form-input" id="height" min="100" max="250">
+        </div>
+
+        <!-- Активность -->
+        <div class="form-group">
+            <label class="form-label">Уровень активности</label>
+            <select class="form-select" id="activity">
+                <option value="" selected disabled>Выберите уровень</option>
+                <option value="1.2">Минимальная (сидячий)</option>
+                <option value="1.375">Лёгкая (1-3 раза/нед)</option>
+                <option value="1.55">Средняя (3-5 раз/нед)</option>
+                <option value="1.725">Высокая (6-7 раз/нед)</option>
+                <option value="1.9">Очень высокая (2 раза/день)</option>
+            </select>
+        </div>
+
+        <!-- Цель -->
+        <div class="form-group form-group--full">
+            <label class="form-label">Ваша цель</label>
+            <div class="radio-group radio-group--3">
+                <span class="radio-tab radio-tab--active" id="goal-lose" onclick="selectGoal('lose')">📉 Похудение</span>
+                <span class="radio-tab" id="goal-maintain" onclick="selectGoal('maintain')">⚖️ Поддержание</span>
+                <span class="radio-tab" id="goal-gain" onclick="selectGoal('gain')">💪 Набор массы</span>
+            </div>
+        </div>
+
+        <!-- Кнопка -->
+        <div class="form-group form-group--full">
+            <button class="btn btn--primary" onclick="calculate()" style="width:100%;text-align:center;cursor:pointer">Рассчитать</button>
+        </div>
+    </div>
+
+    <!-- Результат — скрыт до нажатия -->
+    <div id="result" style="display:none">
+
+        <!-- Суточная норма -->
+        <div class="calc-result">
+            <p class="calc-result__label" id="result-goal-label">Ваша суточная норма</p>
+            <div class="calc-result__value" id="result-value">—</div>
+            <p class="calc-result__unit">килокалорий в день</p>
+            <p class="calc-result__hint" id="result-hint"></p>
+        </div>
+
+        <!-- ИМТ -->
+        <div class="calc-bmi">
+            <h3 class="calc-bmi__title">Индекс массы тела (ИМТ)</h3>
+            <div class="calc-bmi__row">
+                <div class="calc-bmi__value" id="bmi-value">—</div>
+                <div class="calc-bmi__status" id="bmi-status">—</div>
+            </div>
+            <div class="calc-bmi__bar">
+                <div class="calc-bmi__bar-fill" id="bmi-bar"></div>
+                <div class="calc-bmi__pointer" id="bmi-pointer"></div>
+            </div>
+            <div class="calc-bmi__legend">
+                <span class="calc-bmi__leg calc-bmi__leg--under">до 18.5 — дефицит</span>
+                <span class="calc-bmi__leg calc-bmi__leg--normal">18.5–24.9 — норма</span>
+                <span class="calc-bmi__leg calc-bmi__leg--over">25–29.9 — избыток</span>
+                <span class="calc-bmi__leg calc-bmi__leg--obese">30+ — ожирение</span>
+            </div>
+        </div>
+
+        <!-- Предупреждения о здоровье -->
+        <div class="health-alert" id="health-alert" style="display:none">
+            <div class="health-alert__icon" id="ha-icon"></div>
+            <h3 class="health-alert__title" id="ha-title"></h3>
+            <p class="health-alert__desc" id="ha-desc"></p>
+            <div class="health-alert__risks">
+                <h4>Возможные риски для здоровья:</h4>
+                <ul id="ha-risks"></ul>
+            </div>
+            <div class="health-alert__tips">
+                <h4>Рекомендации по питанию:</h4>
+                <ul id="ha-tips"></ul>
+            </div>
+        </div>
+
+        <!-- БЖУ -->
+        <div class="calc-bju">
+            <h3 class="calc-bju__title">Суточная норма БЖУ</h3>
+            <div class="calc-bju__grid">
+                <div class="calc-bju__item calc-bju__item--protein">
+                    <div class="calc-bju__icon">🥩</div>
+                    <div class="calc-bju__val" id="bju-protein">—</div>
+                    <div class="calc-bju__label">Белки</div>
+                    <div class="calc-bju__pct">30%</div>
+                    <div class="calc-bju__bar"><div class="calc-bju__bar-fill calc-bju__bar-fill--protein" style="width:30%"></div></div>
+                </div>
+                <div class="calc-bju__item calc-bju__item--fat">
+                    <div class="calc-bju__icon">🥑</div>
+                    <div class="calc-bju__val" id="bju-fat">—</div>
+                    <div class="calc-bju__label">Жиры</div>
+                    <div class="calc-bju__pct">30%</div>
+                    <div class="calc-bju__bar"><div class="calc-bju__bar-fill calc-bju__bar-fill--fat" style="width:30%"></div></div>
+                </div>
+                <div class="calc-bju__item calc-bju__item--carbs">
+                    <div class="calc-bju__icon">🍞</div>
+                    <div class="calc-bju__val" id="bju-carbs">—</div>
+                    <div class="calc-bju__label">Углеводы</div>
+                    <div class="calc-bju__pct">40%</div>
+                    <div class="calc-bju__bar"><div class="calc-bju__bar-fill calc-bju__bar-fill--carbs" style="width:40%"></div></div>
+                </div>
+            </div>
+            <p class="calc-bju__note">Распределение: 30% белки / 30% жиры / 40% углеводы</p>
+        </div>
+
+    </div>
+</div>
+
+<!-- Рекомендации -->
+<div class="calc-tips"><h3 class="calc-tips__title">Рекомендации по питанию</h3>
+<div class="tip-card"><div class="tip-card__icon">💧</div><div class="tip-card__text"><strong>Водный баланс</strong><p>Пейте не менее 1.5–2 литров воды в день.</p></div></div>
+<div class="tip-card"><div class="tip-card__icon">🥦</div><div class="tip-card__text"><strong>Баланс БЖУ</strong><p>30% белки, 30% жиры, 40% углеводы.</p></div></div>
+<div class="tip-card"><div class="tip-card__icon">🕐</div><div class="tip-card__text"><strong>Режим питания</strong><p>4–5 раз в день небольшими порциями.</p></div></div>
+<div class="tip-card"><div class="tip-card__icon">📉</div><div class="tip-card__text"><strong>Безопасное похудение</strong><p>Дефицит 300–500 ккал. Не ниже 1200 ккал (ж) / 1500 ккал (м).</p></div></div>
+</div>
+
+<!-- Формула -->
+<div class="formula-block"><h3 class="formula-block__title">Формулы расчёта</h3><div class="formula-block__text">
+<p><strong>Калории (Миффлин — Сан Жеора):</strong></p>
+<span class="formula-block__formula">Мужчины: BMR = 10 × вес + 6.25 × рост − 5 × возраст − 5</span>
+<span class="formula-block__formula">Женщины: BMR = 10 × вес + 6.25 × рост − 5 × возраст − 161</span>
+<p>BMR × коэффициент активности (1.2–1.9) = суточная норма (TDEE).</p>
+<p style="margin-top:16px"><strong>Индекс массы тела:</strong></p>
+<span class="formula-block__formula">ИМТ = вес (кг) ÷ рост (м)²</span>
+</div></div>
+
+</div></div></section>
+
+<footer class="footer"><div class="container footer__inner"><div class="footer__brand"><a href="index.html" class="logo"><span class="logo__icon">🍳</span><span class="logo__text">МойРацион</span></a><p class="footer__desc">Сервис для планирования здорового рациона питания. Дипломный проект, 2026.</p></div><div class="footer__links"><h4 class="footer__heading">Навигация</h4><a href="index.html" class="footer__link">Главная</a><a href="planner.html" class="footer__link">Планировщик</a><a href="recipes.html" class="footer__link">Рецепты</a><a href="journal.html" class="footer__link">Дневник</a><a href="calculator.html" class="footer__link">Калькулятор</a></div><div class="footer__links"><h4 class="footer__heading">Информация</h4><a href="#" class="footer__link">О проекте</a><a href="#" class="footer__link">Контакты</a></div></div><div class="container"><div class="footer__bottom"><p>© 2026 МойРацион. Все права защищены.</p></div></div></footer>
+
+<script>
+    var gender = 'male';
+    var goal = 'lose';
+
+    /* Переключение пола */
+    function selectGender(g) {
+        gender = g;
+        document.getElementById('gender-male').className = (g === 'male') ? 'radio-tab radio-tab--active' : 'radio-tab';
+        document.getElementById('gender-female').className = (g === 'female') ? 'radio-tab radio-tab--active' : 'radio-tab';
+    }
+
+    /* Переключение цели */
+    function selectGoal(g) {
+        goal = g;
+        document.getElementById('goal-lose').className = (g === 'lose') ? 'radio-tab radio-tab--active' : 'radio-tab';
+        document.getElementById('goal-maintain').className = (g === 'maintain') ? 'radio-tab radio-tab--active' : 'radio-tab';
+        document.getElementById('goal-gain').className = (g === 'gain') ? 'radio-tab radio-tab--active' : 'radio-tab';
+    }
+
+    /* Форматирование числа (2430 → "2 430") */
+    function fmt(n) {
+        return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+    }
+
+    /* Расчёт */
+    function calculate() {
+        var age      = parseInt(document.getElementById('age').value);
+        var weight   = parseFloat(document.getElementById('weight').value);
+        var height   = parseFloat(document.getElementById('height').value);
+        var activity = parseFloat(document.getElementById('activity').value);
+
+        if (!age || !weight || !height || age < 14 || age > 100 || weight < 30 || height < 100) {
+            alert('Пожалуйста, заполните все поля корректными данными.');
+            return;
+        }
+        if (!activity) {
+            alert('Пожалуйста, выберите уровень активности.');
+            return;
+        }
+
+        /* === Используем общую формулу из common.js === */
+        var r = nutriCalc(gender, age, height, weight, activity, goal);
+        var bmr = r.bmr;
+        var tdee = r.maintain;
+        var kcal = r.kcal;
+
+        /* Результат по выбранной цели */
+        var labelText, hintText;
+        if (goal === 'lose') {
+            labelText = '📉 Для похудения';
+            hintText = 'Дефицит 500 ккал от вашей нормы (' + fmt(tdee) + ' ккал)';
+        } else if (goal === 'maintain') {
+            labelText = '⚖️ Для поддержания веса';
+            hintText = 'Ваш базовый обмен (BMR): ' + fmt(bmr) + ' ккал';
+        } else {
+            labelText = '💪 Для набора массы';
+            hintText = 'Профицит 500 ккал от вашей нормы (' + fmt(tdee) + ' ккал)';
+        }
+
+        document.getElementById('result-goal-label').textContent = labelText;
+        document.getElementById('result-value').textContent = fmt(kcal);
+        document.getElementById('result-hint').textContent = hintText;
+
+        /* === БЖУ из той же функции === */
+        var proteinG = r.protein;
+        var fatG = r.fat;
+        var carbsG = r.carbs;
+
+        document.getElementById('bju-protein').textContent = proteinG + ' г';
+        document.getElementById('bju-fat').textContent     = fatG + ' г';
+        document.getElementById('bju-carbs').textContent   = carbsG + ' г';
+
+        /* === Сохранить в localStorage для планировщика === */
+        localStorage.setItem('nutriplan_kcal', Math.round(kcal));
+        localStorage.setItem('nutriplan_protein', proteinG);
+        localStorage.setItem('nutriplan_fat', fatG);
+        localStorage.setItem('nutriplan_carbs', carbsG);
+
+        /* === ИМТ === */
+        var bmi = r.bmi;
+        var bmiRound = bmi;
+
+        var statusText, statusClass;
+        if (bmi < 18.5) {
+            statusText = 'Дефицит массы тела';
+            statusClass = 'calc-bmi__status--under';
+        } else if (bmi < 25) {
+            statusText = 'Норма';
+            statusClass = 'calc-bmi__status--normal';
+        } else if (bmi < 30) {
+            statusText = 'Избыточная масса тела';
+            statusClass = 'calc-bmi__status--over';
+        } else {
+            statusText = 'Ожирение';
+            statusClass = 'calc-bmi__status--obese';
+        }
+
+        document.getElementById('bmi-value').textContent = bmiRound;
+        var statusEl = document.getElementById('bmi-status');
+        statusEl.textContent = statusText;
+        statusEl.className = 'calc-bmi__status ' + statusClass;
+
+        /* Позиция указателя на шкале (ИМТ от 15 до 40) */
+        var pct = ((bmi - 15) / (40 - 15)) * 100;
+        pct = Math.max(0, Math.min(100, pct));
+        document.getElementById('bmi-pointer').style.left = pct + '%';
+
+        /* === Предупреждения о здоровье === */
+        var alertEl = document.getElementById('health-alert');
+        var haIcon = document.getElementById('ha-icon');
+        var haTitle = document.getElementById('ha-title');
+        var haDesc = document.getElementById('ha-desc');
+        var haRisks = document.getElementById('ha-risks');
+        var haTips = document.getElementById('ha-tips');
+
+        if (bmi < 16) {
+            /* Выраженный дефицит */
+            alertEl.style.display = 'block';
+            alertEl.className = 'health-alert health-alert--critical';
+            haIcon.textContent = '🚨';
+            haTitle.textContent = 'Критический дефицит массы тела';
+            haDesc.textContent = 'Ваш ИМТ (' + bmiRound + ') указывает на выраженный дефицит массы тела. Это серьёзное состояние, требующее внимания специалиста.';
+            haRisks.innerHTML =
+                '<li>Анорексия и расстройства пищевого поведения</li>' +
+                '<li>Дистрофия мышечной ткани</li>' +
+                '<li>Остеопороз (хрупкость костей)</li>' +
+                '<li>Анемия (снижение гемоглобина)</li>' +
+                '<li>Ослабление иммунной системы</li>' +
+                '<li>Гормональные нарушения</li>';
+            haTips.innerHTML =
+                '<li>Срочно обратитесь к врачу-терапевту и диетологу</li>' +
+                '<li>Увеличивайте калорийность постепенно (+300–500 ккал/день)</li>' +
+                '<li>Ешьте 5–6 раз в день маленькими порциями</li>' +
+                '<li>Добавьте калорийные, но полезные продукты: орехи, авокадо, сухофрукты, жирную рыбу</li>' +
+                '<li>Включите белковые продукты в каждый приём пищи</li>' +
+                '<li>Избегайте пустых калорий (фастфуд, сладкое)</li>';
+
+        } else if (bmi < 18.5) {
+            /* Дефицит массы */
+            alertEl.style.display = 'block';
+            alertEl.className = 'health-alert health-alert--warning';
+            haIcon.textContent = '⚠️';
+            haTitle.textContent = 'Дефицит массы тела';
+            haDesc.textContent = 'Ваш ИМТ (' + bmiRound + ') ниже нормы. Недостаточный вес может негативно влиять на здоровье.';
+            haRisks.innerHTML =
+                '<li>Снижение иммунитета — частые простуды и инфекции</li>' +
+                '<li>Хроническая усталость, слабость</li>' +
+                '<li>Потеря мышечной массы</li>' +
+                '<li>Проблемы с кожей, волосами и ногтями</li>' +
+                '<li>Нарушения менструального цикла (у женщин)</li>';
+            haTips.innerHTML =
+                '<li>Увеличьте калорийность рациона на 300–500 ккал</li>' +
+                '<li>Делайте упор на белки: мясо, рыба, яйца, творог, бобовые</li>' +
+                '<li>Добавляйте полезные жиры: орехи, оливковое масло, авокадо</li>' +
+                '<li>Перекусывайте между основными приёмами пищи</li>' +
+                '<li>Включите силовые тренировки для набора мышечной массы</li>' +
+                '<li>Рекомендуется консультация диетолога</li>';
+
+        } else if (bmi < 25) {
+            /* Норма */
+            alertEl.style.display = 'block';
+            alertEl.className = 'health-alert health-alert--good';
+            haIcon.textContent = '✅';
+            haTitle.textContent = 'Вес в пределах нормы';
+            haDesc.textContent = 'Ваш ИМТ (' + bmiRound + ') соответствует нормальному весу. Отлично! Продолжайте придерживаться сбалансированного питания.';
+            haRisks.innerHTML = '<li>Риски для здоровья, связанные с весом, минимальны</li>';
+            haTips.innerHTML =
+                '<li>Поддерживайте текущий рацион и уровень активности</li>' +
+                '<li>Ешьте разнообразно: овощи, фрукты, белки, цельные злаки</li>' +
+                '<li>Пейте достаточно воды (1.5–2 литра в день)</li>' +
+                '<li>Занимайтесь физической активностью 3–5 раз в неделю</li>' +
+                '<li>Контролируйте вес 1–2 раза в месяц</li>';
+
+        } else if (bmi < 30) {
+            /* Избыточная масса */
+            alertEl.style.display = 'block';
+            alertEl.className = 'health-alert health-alert--warning';
+            haIcon.textContent = '⚠️';
+            haTitle.textContent = 'Избыточная масса тела';
+            haDesc.textContent = 'Ваш ИМТ (' + bmiRound + ') указывает на избыточный вес. Это повышает риски для здоровья.';
+            haRisks.innerHTML =
+                '<li>Гипертония (повышенное артериальное давление)</li>' +
+                '<li>Сахарный диабет 2-го типа</li>' +
+                '<li>Повышенный холестерин</li>' +
+                '<li>Заболевания сердечно-сосудистой системы</li>' +
+                '<li>Боли в суставах и позвоночнике</li>' +
+                '<li>Нарушения сна (апноэ)</li>';
+            haTips.innerHTML =
+                '<li>Создайте умеренный дефицит калорий (−300–500 ккал/день)</li>' +
+                '<li>Сократите потребление сахара и мучных изделий</li>' +
+                '<li>Увеличьте долю белка и клетчатки в рационе</li>' +
+                '<li>Ешьте больше овощей — они дают сытость при низкой калорийности</li>' +
+                '<li>Добавьте регулярную физическую активность (ходьба, плавание)</li>' +
+                '<li>Рекомендуется консультация диетолога</li>';
+
+        } else if (bmi < 35) {
+            /* Ожирение I степени */
+            alertEl.style.display = 'block';
+            alertEl.className = 'health-alert health-alert--danger';
+            haIcon.textContent = '🔴';
+            haTitle.textContent = 'Ожирение I степени';
+            haDesc.textContent = 'Ваш ИМТ (' + bmiRound + ') соответствует ожирению I степени. Необходимо обратить серьёзное внимание на питание и образ жизни.';
+            haRisks.innerHTML =
+                '<li>Сахарный диабет 2-го типа</li>' +
+                '<li>Сердечно-сосудистые заболевания (инфаркт, инсульт)</li>' +
+                '<li>Жировой гепатоз (ожирение печени)</li>' +
+                '<li>Артроз коленных и тазобедренных суставов</li>' +
+                '<li>Гормональные нарушения</li>' +
+                '<li>Повышенный риск некоторых видов рака</li>';
+            haTips.innerHTML =
+                '<li>Обязательно обратитесь к врачу-эндокринологу</li>' +
+                '<li>Дефицит калорий 500–700 ккал/день под контролем специалиста</li>' +
+                '<li>Исключите фастфуд, сладкие напитки и полуфабрикаты</li>' +
+                '<li>Основа рациона: белок + овощи + цельные злаки</li>' +
+                '<li>Начните с лёгкой активности: ходьба 30 мин/день</li>' +
+                '<li>Ведите дневник питания для контроля калорий</li>';
+
+        } else {
+            /* Ожирение II–III степени */
+            alertEl.style.display = 'block';
+            alertEl.className = 'health-alert health-alert--critical';
+            haIcon.textContent = '🚨';
+            haTitle.textContent = 'Ожирение ' + (bmi < 40 ? 'II' : 'III') + ' степени';
+            haDesc.textContent = 'Ваш ИМТ (' + bmiRound + ') указывает на тяжёлую степень ожирения. Это состояние представляет серьёзную угрозу для здоровья и жизни.';
+            haRisks.innerHTML =
+                '<li>Тяжёлые формы диабета и инсулинорезистентность</li>' +
+                '<li>Хроническая сердечная недостаточность</li>' +
+                '<li>Тромбозы и эмболия</li>' +
+                '<li>Дыхательная недостаточность</li>' +
+                '<li>Разрушение суставов</li>' +
+                '<li>Депрессия и социальная изоляция</li>' +
+                '<li>Значительно повышенный риск онкологии</li>';
+            haTips.innerHTML =
+                '<li>Необходимо наблюдение у врача (терапевт, эндокринолог, диетолог)</li>' +
+                '<li>Снижение веса только под медицинским контролем</li>' +
+                '<li>Возможно назначение медикаментозной терапии</li>' +
+                '<li>Постепенное изменение пищевых привычек</li>' +
+                '<li>Физическая активность по рекомендации врача</li>' +
+                '<li>Психологическая поддержка может быть полезна</li>';
+        }
+
+        /* Показать результат */
+        document.getElementById('result').style.display = 'block';
+        document.getElementById('result').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+</script>
+<script src="common.js"></script>
+</body>
+</html>

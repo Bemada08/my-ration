@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Дневник — МойРацион</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="header"><div class="container header__inner"><a href="index.html" class="logo"><span class="logo__icon">🍳</span><span class="logo__text">МойРацион</span></a><nav class="nav"><a href="index.html" class="nav__link">Главная</a><a href="planner.html" class="nav__link">Планировщик</a><a href="recipes.html" class="nav__link">Рецепты</a><a href="journal.html" class="nav__link nav__link--active">Дневник</a><a href="calculator.html" class="nav__link">Калькулятор</a></nav></div></header>
+
+<section class="page-header"><div class="container"><h1 class="page-header__title">Дневник питания</h1><p class="page-header__desc">Отслеживайте вес и выполнение рациона — маленькие шаги к большой цели</p></div></section>
+
+<section class="journal"><div class="container">
+
+    <div class="journal-grid">
+
+        <!-- ===== ЛЕВАЯ КОЛОНКА ===== -->
+        <div class="journal-main">
+
+            <!-- Трекер веса -->
+            <div class="journal-block">
+                <h2 class="journal-block__title">📊 Трекер веса</h2>
+                <p class="journal-block__desc">Добавляйте вес раз в неделю, чтобы видеть динамику</p>
+
+                <div class="weight-form">
+                    <div class="weight-form__row">
+                        <input type="number" id="weight-input" placeholder="Вес, кг" min="20" max="300" step="0.1">
+                        <input type="date" id="weight-date">
+                        <button class="btn btn--primary" onclick="addWeight()">Добавить</button>
+                    </div>
+                    <p class="weight-form__hint" id="weight-goal-hint"></p>
+                </div>
+
+                <!-- График -->
+                <div class="weight-chart-wrapper">
+                    <canvas id="weight-chart" width="800" height="300"></canvas>
+                    <p class="weight-chart__empty" id="weight-empty">Пока нет записей. Добавьте первый вес выше ⬆️</p>
+                </div>
+
+                <!-- История -->
+                <div class="weight-history" id="weight-history"></div>
+            </div>
+
+            <!-- Трекер воды -->
+            <div class="journal-block">
+                <h2 class="journal-block__title">💧 Вода сегодня</h2>
+                <p class="journal-block__desc">Цель — 8 стаканов воды в день (~2 литра). Счётчик обнуляется каждый день автоматически.</p>
+
+                <div class="water-tracker">
+                    <div class="water-tracker__top">
+                        <div class="water-tracker__count">
+                            <span class="water-tracker__big" id="water-big">0</span>
+                            <span class="water-tracker__goal">из 8 стаканов</span>
+                        </div>
+                        <div class="water-tracker__actions">
+                            <button class="water-btn water-btn--minus" onclick="waterMinus()">−1</button>
+                            <button class="water-btn water-btn--plus" onclick="waterPlus()">+1 стакан</button>
+                        </div>
+                    </div>
+
+                    <div class="water-tracker__bar">
+                        <div class="water-tracker__fill" id="water-fill"></div>
+                    </div>
+
+                    <div class="water-tracker__cups" id="water-cups"></div>
+                </div>
+            </div>
+
+            <!-- Отметка рациона -->
+            <div class="journal-block">
+                <h2 class="journal-block__title">✅ Выполнение рациона</h2>
+                <p class="journal-block__desc">Отмечайте дни, когда придерживались плана</p>
+
+                <!-- Сегодня -->
+                <div class="today-check">
+                    <div class="today-check__info">
+                        <span class="today-check__date" id="today-date"></span>
+                        <span class="today-check__label">Как прошёл день?</span>
+                    </div>
+                    <div class="today-check__buttons">
+                        <button class="check-btn check-btn--yes" id="btn-yes" onclick="markDay('yes')">✅ Соблюдал</button>
+                        <button class="check-btn check-btn--partial" id="btn-partial" onclick="markDay('partial')">⚖️ Частично</button>
+                        <button class="check-btn check-btn--no" id="btn-no" onclick="markDay('no')">❌ Нет</button>
+                    </div>
+                </div>
+
+                <!-- Календарь -->
+                <div class="calendar-wrapper">
+                    <div class="calendar-header">
+                        <button class="calendar-nav" onclick="changeMonth(-1)">‹</button>
+                        <span class="calendar-title" id="calendar-title"></span>
+                        <button class="calendar-nav" onclick="changeMonth(1)">›</button>
+                    </div>
+                    <div class="calendar-weekdays">
+                        <span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span>
+                    </div>
+                    <div class="calendar-grid" id="calendar-grid"></div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ===== ПРАВАЯ КОЛОНКА — СТАТИСТИКА ===== -->
+        <aside class="journal-aside">
+            <div class="journal-block">
+                <h2 class="journal-block__title">📈 Ваша статистика</h2>
+
+                <div class="stat-card stat-card--weight">
+                    <div class="stat-card__label">Текущий вес</div>
+                    <div class="stat-card__value" id="stat-current">—</div>
+                    <div class="stat-card__sub" id="stat-change">Добавьте данные</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-card__label">Записей веса</div>
+                    <div class="stat-card__value" id="stat-entries">0</div>
+                </div>
+
+                <div class="stat-card stat-card--success">
+                    <div class="stat-card__label">Дней соблюдения</div>
+                    <div class="stat-card__value" id="stat-success">0</div>
+                    <div class="stat-card__sub" id="stat-success-sub">За всё время</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-card__label">Серия подряд</div>
+                    <div class="stat-card__value" id="stat-streak">0 🔥</div>
+                    <div class="stat-card__sub">Текущая серия успешных дней</div>
+                </div>
+
+                <button class="btn btn--outline journal-reset" onclick="resetJournal()">🗑 Очистить дневник</button>
+            </div>
+        </aside>
+
+    </div>
+
+</div></section>
+
+<footer class="footer"><div class="container footer__inner"><div class="footer__brand"><a href="index.html" class="logo"><span class="logo__icon">🍳</span><span class="logo__text">МойРацион</span></a><p class="footer__desc">Дипломный проект, 2026.</p></div><div class="footer__links"><h4 class="footer__heading">Навигация</h4><a href="index.html" class="footer__link">Главная</a><a href="planner.html" class="footer__link">Планировщик</a><a href="recipes.html" class="footer__link">Рецепты</a><a href="journal.html" class="footer__link">Дневник</a><a href="calculator.html" class="footer__link">Калькулятор</a></div></div><div class="container"><div class="footer__bottom"><p>© 2026 МойРацион. Все права защищены.</p></div></div></footer>
+
+<script>
+/* ========== ДАННЫЕ ========== */
+var weightLog = JSON.parse(localStorage.getItem('nutriplan_weight_log') || '[]');
+/* dayMarks: { "2026-04-21": "yes" | "partial" | "no" } */
+var dayMarks = JSON.parse(localStorage.getItem('nutriplan_day_marks') || '{}');
+
+var currentMonth = new Date();
+currentMonth.setDate(1);
+
+/* ========== УТИЛИТЫ ========== */
+function formatDate(d) {
+    var y = d.getFullYear();
+    var m = String(d.getMonth() + 1).padStart(2, '0');
+    var day = String(d.getDate()).padStart(2, '0');
+    return y + '-' + m + '-' + day;
+}
+function formatDateHuman(iso) {
+    var parts = iso.split('-');
+    return parts[2] + '.' + parts[1] + '.' + parts[0];
+}
+function todayISO() {
+    return formatDate(new Date());
+}
+
+/* ========== ТРЕКЕР ВЕСА ========== */
+function addWeight() {
+    var inp = document.getElementById('weight-input');
+    var dateInp = document.getElementById('weight-date');
+    var w = parseFloat(inp.value);
+    var d = dateInp.value || todayISO();
+
+    if (!w || w < 20 || w > 300) {
+        alert('Введите корректный вес (20–300 кг)');
+        return;
+    }
+
+    /* Если запись на эту дату уже есть — обновляем */
+    var existing = weightLog.find(function(e) { return e.date === d; });
+    if (existing) {
+        existing.weight = w;
+    } else {
+        weightLog.push({ date: d, weight: w });
+    }
+    weightLog.sort(function(a, b) { return a.date.localeCompare(b.date); });
+
+    localStorage.setItem('nutriplan_weight_log', JSON.stringify(weightLog));
+
+    inp.value = '';
+    renderWeight();
+    renderStats();
+}
+
+function removeWeight(date) {
+    if (!confirm('Удалить эту запись?')) return;
+    weightLog = weightLog.filter(function(e) { return e.date !== date; });
+    localStorage.setItem('nutriplan_weight_log', JSON.stringify(weightLog));
+    renderWeight();
+    renderStats();
+}
+
+function renderWeight() {
+    var empty = document.getElementById('weight-empty');
+    var canvas = document.getElementById('weight-chart');
+    var history = document.getElementById('weight-history');
+
+    if (weightLog.length === 0) {
+        empty.style.display = 'block';
+        canvas.style.display = 'none';
+        history.innerHTML = '';
+        return;
+    }
+
+    empty.style.display = 'none';
+    canvas.style.display = 'block';
+    drawChart();
+
+    /* История последних 10 записей */
+    var recent = weightLog.slice(-10).reverse();
+    history.innerHTML = '<h3 class="weight-history__title">История записей</h3>' +
+        recent.map(function(e, idx) {
+            var prev = weightLog[weightLog.length - 2 - idx];
+            var diff = prev ? (e.weight - prev.weight) : 0;
+            var diffStr = '';
+            if (prev) {
+                if (diff > 0) diffStr = '<span class="weight-diff weight-diff--up">+' + diff.toFixed(1) + '</span>';
+                else if (diff < 0) diffStr = '<span class="weight-diff weight-diff--down">' + diff.toFixed(1) + '</span>';
+                else diffStr = '<span class="weight-diff">—</span>';
+            }
+            return '<div class="weight-history__item">' +
+                '<span class="weight-history__date">' + formatDateHuman(e.date) + '</span>' +
+                '<span class="weight-history__value">' + e.weight.toFixed(1) + ' кг</span>' +
+                diffStr +
+                '<button class="weight-history__del" onclick="removeWeight(\'' + e.date + '\')">✕</button>' +
+                '</div>';
+        }).join('');
+}
+
+/* Рисуем график на Canvas */
+function drawChart() {
+    var canvas = document.getElementById('weight-chart');
+    var ctx = canvas.getContext('2d');
+    var W = canvas.width, H = canvas.height;
+
+    ctx.clearRect(0, 0, W, H);
+
+    var padding = { top: 30, right: 30, bottom: 50, left: 50 };
+    var chartW = W - padding.left - padding.right;
+    var chartH = H - padding.top - padding.bottom;
+
+    var weights = weightLog.map(function(e) { return e.weight; });
+    var minW = Math.min.apply(null, weights) - 1;
+    var maxW = Math.max.apply(null, weights) + 1;
+    if (maxW - minW < 2) { minW -= 1; maxW += 1; }
+
+    /* Сетка + подписи оси Y */
+    ctx.strokeStyle = '#e5e0d6';
+    ctx.fillStyle = '#8b7355';
+    ctx.font = '12px Nunito, sans-serif';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+
+    for (var i = 0; i <= 4; i++) {
+        var y = padding.top + (chartH / 4) * i;
+        var val = maxW - ((maxW - minW) / 4) * i;
+        ctx.beginPath();
+        ctx.moveTo(padding.left, y);
+        ctx.lineTo(W - padding.right, y);
+        ctx.stroke();
+        ctx.fillText(val.toFixed(1), padding.left - 8, y);
+    }
+
+    /* Точки и линия */
+    var n = weightLog.length;
+    var points = weightLog.map(function(e, i) {
+        var x = n === 1 ? padding.left + chartW / 2 : padding.left + (chartW / (n - 1)) * i;
+        var y = padding.top + chartH * (1 - (e.weight - minW) / (maxW - minW));
+        return { x: x, y: y, date: e.date, weight: e.weight };
+    });
+
+    /* Заливка под линией */
+    if (n > 1) {
+        ctx.beginPath();
+        ctx.moveTo(points[0].x, H - padding.bottom);
+        points.forEach(function(p) { ctx.lineTo(p.x, p.y); });
+        ctx.lineTo(points[n-1].x, H - padding.bottom);
+        ctx.closePath();
+        var grad = ctx.createLinearGradient(0, padding.top, 0, H - padding.bottom);
+        grad.addColorStop(0, 'rgba(181, 101, 29, 0.25)');
+        grad.addColorStop(1, 'rgba(181, 101, 29, 0)');
+        ctx.fillStyle = grad;
+        ctx.fill();
+    }
+
+    /* Линия */
+    if (n > 1) {
+        ctx.strokeStyle = '#b5651d';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        points.forEach(function(p, i) {
+            if (i === 0) ctx.moveTo(p.x, p.y);
+            else ctx.lineTo(p.x, p.y);
+        });
+        ctx.stroke();
+    }
+
+    /* Точки */
+    points.forEach(function(p) {
+        ctx.fillStyle = '#b5651d';
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+    });
+
+    /* Подписи оси X — показываем каждую n-ую точку если их много */
+    ctx.fillStyle = '#8b7355';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    var step = Math.max(1, Math.ceil(n / 8));
+    points.forEach(function(p, i) {
+        if (i % step === 0 || i === n - 1) {
+            var label = p.date.slice(5).replace('-', '.');
+            ctx.fillText(label, p.x, H - padding.bottom + 8);
+        }
+    });
+}
+
+/* ========== ОТМЕТКА ДНЯ ========== */
+function markDay(status) {
+    var today = todayISO();
+    if (dayMarks[today] === status) {
+        delete dayMarks[today];
+    } else {
+        dayMarks[today] = status;
+    }
+    localStorage.setItem('nutriplan_day_marks', JSON.stringify(dayMarks));
+    renderTodayButtons();
+    renderCalendar();
+    renderStats();
+}
+
+function renderTodayButtons() {
+    var today = todayISO();
+    var mark = dayMarks[today];
+    ['yes', 'partial', 'no'].forEach(function(s) {
+        var btn = document.getElementById('btn-' + s);
+        btn.classList.toggle('check-btn--active', mark === s);
+    });
+
+    var dateEl = document.getElementById('today-date');
+    var d = new Date();
+    var months = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+    dateEl.textContent = 'Сегодня, ' + d.getDate() + ' ' + months[d.getMonth()];
+}
+
+/* ========== КАЛЕНДАРЬ ========== */
+function changeMonth(delta) {
+    currentMonth.setMonth(currentMonth.getMonth() + delta);
+    renderCalendar();
+}
+
+function renderCalendar() {
+    var title = document.getElementById('calendar-title');
+    var grid = document.getElementById('calendar-grid');
+
+    var months = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+    title.textContent = months[currentMonth.getMonth()] + ' ' + currentMonth.getFullYear();
+
+    var year = currentMonth.getFullYear();
+    var month = currentMonth.getMonth();
+
+    var firstDay = new Date(year, month, 1);
+    var lastDay = new Date(year, month + 1, 0);
+    /* getDay: 0=вс, 1=пн — нам нужно чтобы пн был 0 */
+    var startOffset = (firstDay.getDay() + 6) % 7;
+
+    var html = '';
+    /* Пустые клетки в начале */
+    for (var i = 0; i < startOffset; i++) {
+        html += '<div class="calendar-day calendar-day--empty"></div>';
+    }
+
+    var today = todayISO();
+    for (var d = 1; d <= lastDay.getDate(); d++) {
+        var iso = year + '-' + String(month + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+        var mark = dayMarks[iso];
+        var cls = 'calendar-day';
+        if (mark) cls += ' calendar-day--' + mark;
+        if (iso === today) cls += ' calendar-day--today';
+        var icon = '';
+        if (mark === 'yes') icon = '<span class="calendar-icon">✓</span>';
+        else if (mark === 'partial') icon = '<span class="calendar-icon">~</span>';
+        else if (mark === 'no') icon = '<span class="calendar-icon">✕</span>';
+        html += '<div class="' + cls + '">' + d + icon + '</div>';
+    }
+    grid.innerHTML = html;
+}
+
+/* ========== СТАТИСТИКА ========== */
+function renderStats() {
+    /* Текущий вес и изменение */
+    var curEl = document.getElementById('stat-current');
+    var changeEl = document.getElementById('stat-change');
+    var entriesEl = document.getElementById('stat-entries');
+
+    entriesEl.textContent = weightLog.length;
+
+    if (weightLog.length === 0) {
+        curEl.textContent = '—';
+        changeEl.textContent = 'Добавьте данные';
+    } else {
+        var last = weightLog[weightLog.length - 1];
+        var first = weightLog[0];
+        curEl.textContent = last.weight.toFixed(1) + ' кг';
+
+        if (weightLog.length === 1) {
+            changeEl.textContent = 'Первая запись';
+            changeEl.className = 'stat-card__sub';
+        } else {
+            var diff = last.weight - first.weight;
+            var sign = diff > 0 ? '+' : '';
+            changeEl.textContent = sign + diff.toFixed(1) + ' кг от начала';
+            changeEl.className = 'stat-card__sub ' + (diff < 0 ? 'stat-card__sub--good' : (diff > 0 ? 'stat-card__sub--bad' : ''));
+        }
+    }
+
+    /* Показать цель (если есть в localStorage из опроса) */
+    var goal = localStorage.getItem('nutriplan_goal');
+    var hint = document.getElementById('weight-goal-hint');
+    if (goal === 'lose') hint.textContent = '🎯 Ваша цель: снижение веса';
+    else if (goal === 'gain') hint.textContent = '🎯 Ваша цель: набор массы';
+    else if (goal === 'keep') hint.textContent = '🎯 Ваша цель: поддержание веса';
+    else hint.textContent = '';
+
+    /* Успешные дни */
+    var yesCount = 0, partialCount = 0;
+    Object.keys(dayMarks).forEach(function(k) {
+        if (dayMarks[k] === 'yes') yesCount++;
+        else if (dayMarks[k] === 'partial') partialCount++;
+    });
+    document.getElementById('stat-success').textContent = yesCount;
+    document.getElementById('stat-success-sub').textContent = partialCount > 0 ? ('+ ' + partialCount + ' частично') : 'За всё время';
+
+    /* Серия подряд */
+    var streak = 0;
+    var d = new Date();
+    while (true) {
+        var iso = formatDate(d);
+        if (dayMarks[iso] === 'yes') {
+            streak++;
+            d.setDate(d.getDate() - 1);
+        } else {
+            break;
+        }
+    }
+    document.getElementById('stat-streak').textContent = streak + ' 🔥';
+}
+
+/* ========== СБРОС ========== */
+function resetJournal() {
+    if (!confirm('Удалить все записи веса и отметки дней? Это действие необратимо.')) return;
+    weightLog = [];
+    dayMarks = {};
+    localStorage.removeItem('nutriplan_weight_log');
+    localStorage.removeItem('nutriplan_day_marks');
+    renderWeight();
+    renderTodayButtons();
+    renderCalendar();
+    renderStats();
+}
+
+/* ========== ИНИЦИАЛИЗАЦИЯ ========== */
+document.getElementById('weight-date').value = todayISO();
+renderWeight();
+renderTodayButtons();
+renderCalendar();
+renderStats();
+
+/* При изменении размера окна — перерисовать график */
+window.addEventListener('resize', function() {
+    if (weightLog.length > 0) {
+        var canvas = document.getElementById('weight-chart');
+        canvas.width = canvas.offsetWidth;
+        drawChart();
+    }
+});
+
+/* Подогнать canvas под ширину контейнера */
+setTimeout(function() {
+    var canvas = document.getElementById('weight-chart');
+    canvas.width = canvas.offsetWidth;
+    if (weightLog.length > 0) drawChart();
+}, 100);
+
+/* ==================== ТРЕКЕР ВОДЫ ==================== */
+var WATER_KEY = 'nutriplan_water_daily';
+var WATER_GOAL = 8;
+
+function getWaterData() {
+    var today = new Date().toISOString().slice(0, 10);
+    var data = {};
+    try {
+        var raw = localStorage.getItem(WATER_KEY);
+        if (raw) data = JSON.parse(raw);
+        if (typeof data !== 'object' || data === null) data = {};
+    } catch (e) { data = {}; }
+    /* Сброс если день сменился */
+    if (data.date !== today) {
+        data = { date: today, count: 0 };
+        localStorage.setItem(WATER_KEY, JSON.stringify(data));
+    }
+    return data;
+}
+
+function saveWaterData(data) {
+    localStorage.setItem(WATER_KEY, JSON.stringify(data));
+}
+
+function renderWater() {
+    var data = getWaterData();
+    document.getElementById('water-big').textContent = data.count;
+    var pct = Math.min(100, (data.count / WATER_GOAL) * 100);
+    document.getElementById('water-fill').style.width = pct + '%';
+
+    var cups = '';
+    for (var i = 0; i < WATER_GOAL; i++) {
+        cups += '<span class="water-cup' + (i < data.count ? ' water-cup--full' : '') + '">💧</span>';
+    }
+    document.getElementById('water-cups').innerHTML = cups;
+}
+
+function waterPlus() {
+    var data = getWaterData();
+    data.count = Math.min(WATER_GOAL + 5, data.count + 1);
+    saveWaterData(data);
+    renderWater();
+    /* Анимация "празднование" при достижении цели */
+    if (data.count === WATER_GOAL) {
+        var big = document.getElementById('water-big');
+        big.classList.add('water-celebrate');
+        setTimeout(function() { big.classList.remove('water-celebrate'); }, 1000);
+    }
+}
+
+function waterMinus() {
+    var data = getWaterData();
+    data.count = Math.max(0, data.count - 1);
+    saveWaterData(data);
+    renderWater();
+}
+
+renderWater();
+</script>
+<script src="common.js"></script>
+</body>
+</html>
