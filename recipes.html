@@ -799,6 +799,21 @@
                     <label class="form-label">Описание</label>
                     <textarea class="form-input form-textarea" id="m-desc" rows="2" placeholder="Краткое описание блюда..."></textarea>
                 </div>
+                <div class="form-group form-group--full">
+                    <label class="form-label">Картинка блюда</label>
+                    <div class="image-upload">
+                        <input type="file" id="m-image-file" accept="image/*" style="display:none" onchange="handleImageUpload(event)">
+                        <div class="image-upload__preview" id="image-preview">
+                            <span class="image-upload__placeholder">🖼 Картинка не выбрана</span>
+                        </div>
+                        <div class="image-upload__buttons">
+                            <button type="button" class="btn btn--outline image-upload__btn" onclick="document.getElementById('m-image-file').click()">📷 Выбрать файл</button>
+                            <button type="button" class="btn btn--outline image-upload__btn image-upload__btn--remove" id="image-remove" style="display:none" onclick="removeImage()">✕ Удалить</button>
+                        </div>
+                        <p class="image-upload__hint">JPG, PNG или WEBP, до 2 МБ</p>
+                        <input type="hidden" id="m-image-data">
+                    </div>
+                </div>
                 <div class="form-group">
                     <label class="form-label">Время приготовления</label>
                     <input type="text" class="form-input" id="m-time" placeholder="15 мин">
@@ -873,6 +888,23 @@ function editCard(btn) {
     var catKey = Object.keys(catMap).find(function(k) { return catMap[k].label === badge; }) || 'breakfast';
     document.getElementById('m-category').value = catKey;
 
+    /* Восстановить картинку если была */
+    var savedImage = card.getAttribute('data-image') || '';
+    document.getElementById('m-image-data').value = savedImage;
+    var preview = document.getElementById('image-preview');
+    if (savedImage) {
+        preview.style.backgroundImage = 'url(\'' + savedImage + '\')';
+        preview.classList.add('image-upload__preview--has-image');
+        preview.querySelector('.image-upload__placeholder').style.display = 'none';
+        document.getElementById('image-remove').style.display = 'inline-block';
+    } else {
+        preview.style.backgroundImage = '';
+        preview.classList.remove('image-upload__preview--has-image');
+        var ph = preview.querySelector('.image-upload__placeholder');
+        if (ph) ph.style.display = '';
+        document.getElementById('image-remove').style.display = 'none';
+    }
+
     document.getElementById('modal').classList.add('modal-overlay--open');
     document.body.style.overflow = 'hidden';
 }
@@ -900,9 +932,58 @@ function closeModalOutside(e) {
 
 /* Очистить форму */
 function clearForm() {
-    var ids = ['m-name','m-desc','m-time','m-kcal','m-portions','m-ingredients','m-steps'];
-    ids.forEach(function(id) { document.getElementById(id).value = ''; });
+    var ids = ['m-name','m-desc','m-time','m-kcal','m-portions','m-ingredients','m-steps','m-image-data'];
+    ids.forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) el.value = '';
+    });
     document.getElementById('m-category').value = 'breakfast';
+    /* Сбросить превью картинки */
+    var preview = document.getElementById('image-preview');
+    preview.style.backgroundImage = '';
+    preview.classList.remove('image-upload__preview--has-image');
+    var ph = preview.querySelector('.image-upload__placeholder');
+    if (ph) ph.style.display = '';
+    document.getElementById('image-remove').style.display = 'none';
+    document.getElementById('m-image-file').value = '';
+}
+
+/* Загрузка картинки — превращаем в base64 чтобы не зависеть от файлов на диске */
+function handleImageUpload(event) {
+    var file = event.target.files[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+        alert('Выберите файл с изображением (JPG, PNG, WEBP)');
+        return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+        alert('Файл слишком большой. Максимум 2 МБ.');
+        return;
+    }
+    var reader = new FileReader();
+    reader.onload = function(e) {
+        var dataUrl = e.target.result;
+        document.getElementById('m-image-data').value = dataUrl;
+        var preview = document.getElementById('image-preview');
+        preview.style.backgroundImage = 'url(\'' + dataUrl + '\')';
+        preview.classList.add('image-upload__preview--has-image');
+        var ph = preview.querySelector('.image-upload__placeholder');
+        if (ph) ph.style.display = 'none';
+        document.getElementById('image-remove').style.display = 'inline-block';
+    };
+    reader.readAsDataURL(file);
+}
+
+/* Удалить выбранную картинку */
+function removeImage() {
+    document.getElementById('m-image-data').value = '';
+    document.getElementById('m-image-file').value = '';
+    var preview = document.getElementById('image-preview');
+    preview.style.backgroundImage = '';
+    preview.classList.remove('image-upload__preview--has-image');
+    var ph = preview.querySelector('.image-upload__placeholder');
+    if (ph) ph.style.display = '';
+    document.getElementById('image-remove').style.display = 'none';
 }
 
 /* Сохранить (создать или обновить) */
@@ -913,10 +994,16 @@ function saveRecipe() {
     var time = document.getElementById('m-time').value.trim();
     var kcal = document.getElementById('m-kcal').value.trim();
     var portions = document.getElementById('m-portions').value.trim();
+    var imageData = document.getElementById('m-image-data').value;
 
     if (!name) { alert('Введите название блюда'); return; }
 
     var cat = catMap[catKey];
+
+    /* Стиль для блока картинки: пользовательская картинка или градиент категории */
+    var imgStyle = imageData
+        ? 'background-image:url(\'' + imageData + '\');background-size:cover;background-position:center'
+        : 'background:linear-gradient(135deg,' + cat.grad + ')';
 
     if (editingCard) {
         /* === РЕДАКТИРОВАНИЕ === */
@@ -926,7 +1013,16 @@ function saveRecipe() {
         editingCard.querySelector('.recipe-card__badge').textContent = cat.label;
 
         var imgDiv = editingCard.querySelector('.recipe-card__img');
-        imgDiv.style.background = cat.gradient;
+        imgDiv.style.cssText = imgStyle;
+        /* Восстановить бейдж после смены style */
+        if (!imgDiv.querySelector('.recipe-card__badge')) {
+            var badge = document.createElement('span');
+            badge.className = 'recipe-card__badge';
+            badge.textContent = cat.label;
+            imgDiv.appendChild(badge);
+        }
+        /* Сохраняем картинку как data-атрибут карточки */
+        editingCard.setAttribute('data-image', imageData);
 
         var metas = editingCard.querySelectorAll('.recipe-card__meta span');
         if (metas[0]) metas[0].textContent = '⏱ ' + (time || '— мин');
@@ -938,8 +1034,9 @@ function saveRecipe() {
         var card = document.createElement('div');
         card.className = 'recipe-card ' + cat.css;
         card.setAttribute('data-id', nextId++);
+        if (imageData) card.setAttribute('data-image', imageData);
         card.innerHTML =
-            '<div class="recipe-card__img" style="background:linear-gradient(135deg,' + cat.grad + ')">' +
+            '<div class="recipe-card__img" style="' + imgStyle + '">' +
                 '<span class="recipe-card__badge">' + cat.label + '</span>' +
             '</div>' +
             '<div class="recipe-card__body">' +

@@ -100,6 +100,26 @@
             </div>
         </div>
 
+        <!-- Возрастные особенности метаболизма -->
+        <div class="age-info" id="age-info" style="display:none">
+            <div class="age-info__head">
+                <span class="age-info__icon" id="ai-icon">⚡</span>
+                <h3 class="age-info__title" id="ai-title">Особенности вашего возраста</h3>
+            </div>
+            <p class="age-info__desc" id="ai-desc"></p>
+            <div class="age-info__metric">
+                <div class="age-info__bar">
+                    <div class="age-info__fill" id="ai-fill"></div>
+                </div>
+                <div class="age-info__legend">
+                    <span>Замедленный</span>
+                    <span>Средний</span>
+                    <span>Активный</span>
+                </div>
+            </div>
+            <div class="age-info__tips" id="ai-tips"></div>
+        </div>
+
         <!-- Предупреждения о здоровье -->
         <div class="health-alert" id="health-alert" style="display:none">
             <div class="health-alert__icon" id="ha-icon"></div>
@@ -275,6 +295,20 @@
         var pct = ((bmi - 15) / (40 - 15)) * 100;
         pct = Math.max(0, Math.min(100, pct));
         document.getElementById('bmi-pointer').style.left = pct + '%';
+
+        /* === Возрастные особенности метаболизма === */
+        var ageData = ageMetabolism(age);
+        document.getElementById('ai-icon').textContent = ageData.icon;
+        document.getElementById('ai-title').textContent = ageData.title;
+        document.getElementById('ai-desc').textContent = ageData.desc;
+        document.getElementById('ai-fill').style.width = ageData.percent + '%';
+        var tipsHtml = '<h4>Советы для вашего возраста:</h4><ul>';
+        ageData.tips.forEach(function(tip) { tipsHtml += '<li>' + tip + '</li>'; });
+        tipsHtml += '</ul>';
+        document.getElementById('ai-tips').innerHTML = tipsHtml;
+        var ageEl = document.getElementById('age-info');
+        ageEl.className = 'age-info age-info--' + ageData.stage;
+        ageEl.style.display = 'block';
 
         /* === Предупреждения о здоровье === */
         var alertEl = document.getElementById('health-alert');
