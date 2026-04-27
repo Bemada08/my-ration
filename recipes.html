@@ -916,7 +916,10 @@ function deleteCard(btn) {
         card.style.transition = 'opacity 0.3s, transform 0.3s';
         card.style.opacity = '0';
         card.style.transform = 'scale(0.9)';
-        setTimeout(function() { card.remove(); }, 300);
+        setTimeout(function() {
+            card.remove();
+            saveUserRecipes();
+        }, 300);
     }
 }
 
@@ -1034,6 +1037,7 @@ function saveRecipe() {
         var card = document.createElement('div');
         card.className = 'recipe-card ' + cat.css;
         card.setAttribute('data-id', nextId++);
+        card.setAttribute('data-user', '1'); /* помечаем как пользовательскую */
         if (imageData) card.setAttribute('data-image', imageData);
         card.innerHTML =
             '<div class="recipe-card__img" style="' + imgStyle + '">' +
@@ -1068,6 +1072,7 @@ function saveRecipe() {
         document.getElementById('filter-all').checked = true;
     }
 
+    saveUserRecipes();
     closeModal();
 }
 
@@ -1132,6 +1137,91 @@ function clearSearch() {
     document.getElementById('recipe-search').value = '';
     searchRecipes();
 }
+
+/* ==================== СОХРАНЕНИЕ ПОЛЬЗОВАТЕЛЬСКИХ РЕЦЕПТОВ ==================== */
+
+var USER_RECIPES_KEY = 'nutriplan_user_recipes';
+
+/* Собирает все пользовательские карточки и сохраняет в localStorage */
+function saveUserRecipes() {
+    var cards = document.querySelectorAll('.recipe-card[data-user="1"]');
+    var data = [];
+    cards.forEach(function(card) {
+        var meta = card.querySelectorAll('.recipe-card__meta span');
+        var badge = card.querySelector('.recipe-card__badge').textContent;
+        /* Определяем catKey по бейджу */
+        var catKey = 'breakfast';
+        Object.keys(catMap).forEach(function(k) {
+            if (catMap[k].label === badge) catKey = k;
+        });
+        data.push({
+            id: card.getAttribute('data-id'),
+            cat: catKey,
+            name: card.querySelector('.recipe-card__title').textContent,
+            desc: card.querySelector('.recipe-card__desc').textContent,
+            time: meta[0] ? meta[0].textContent.replace('⏱ ','') : '',
+            kcal: meta[1] ? meta[1].textContent.replace('🔥 ','').replace(' ккал','') : '',
+            portions: meta[2] ? meta[2].textContent.replace('🍽 ','') : '',
+            image: card.getAttribute('data-image') || ''
+        });
+    });
+    try {
+        localStorage.setItem(USER_RECIPES_KEY, JSON.stringify(data));
+    } catch (e) {
+        /* localStorage может переполниться из-за base64-картинок */
+        alert('Не удалось сохранить рецепт — закончилось место в браузере. Попробуйте удалить старые рецепты или использовать картинки меньшего размера.');
+    }
+}
+
+/* Загружает сохранённые рецепты при открытии страницы */
+function loadUserRecipes() {
+    var raw;
+    try { raw = localStorage.getItem(USER_RECIPES_KEY); } catch (e) { return; }
+    if (!raw) return;
+
+    var data;
+    try { data = JSON.parse(raw); } catch (e) { return; }
+    if (!Array.isArray(data) || data.length === 0) return;
+
+    var grid = document.getElementById('recipes-grid');
+    data.forEach(function(r) {
+        var cat = catMap[r.cat] || catMap.breakfast;
+        var imgStyle = r.image
+            ? 'background-image:url(\'' + r.image + '\');background-size:cover;background-position:center'
+            : 'background:' + cat.gradient;
+
+        var card = document.createElement('div');
+        card.className = 'recipe-card ' + cat.css;
+        card.setAttribute('data-id', r.id || (nextId++));
+        card.setAttribute('data-user', '1');
+        if (r.image) card.setAttribute('data-image', r.image);
+        card.innerHTML =
+            '<div class="recipe-card__img" style="' + imgStyle + '">' +
+                '<span class="recipe-card__badge">' + cat.label + '</span>' +
+            '</div>' +
+            '<div class="recipe-card__body">' +
+                '<h3 class="recipe-card__title">' + r.name + '</h3>' +
+                '<p class="recipe-card__desc">' + (r.desc || 'Без описания') + '</p>' +
+                '<div class="recipe-card__meta">' +
+                    '<span>⏱ ' + (r.time || '— мин') + '</span>' +
+                    '<span>🔥 ' + (r.kcal || '—') + ' ккал</span>' +
+                    '<span>🍽 ' + (r.portions || '—') + '</span>' +
+                '</div>' +
+                '<div class="recipe-card__actions">' +
+                    '<button class="card-btn card-btn--edit" onclick="event.stopPropagation();editCard(this)">✏️ Редактировать</button>' +
+                    '<button class="card-btn card-btn--delete" onclick="event.stopPropagation();deleteCard(this)">🗑 Удалить</button>' +
+                '</div>' +
+            '</div>';
+        grid.appendChild(card);
+
+        /* Обновляем nextId чтобы новые карточки не пересекались с существующими */
+        var rid = parseInt(r.id, 10);
+        if (!isNaN(rid) && rid >= nextId) nextId = rid + 1;
+    });
+}
+
+/* Загружаем сохранённые рецепты при открытии страницы */
+loadUserRecipes();
 </script>
 <script src="common.js"></script>
 </body>
