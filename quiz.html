@@ -233,9 +233,8 @@
             <div class="forecast__target">
                 <label class="forecast__label">Какого веса хотите достичь?</label>
                 <div class="forecast__input-row">
-                    <input type="number" id="forecast-target" class="forecast__input" placeholder="65" step="0.5">
+                    <input type="number" id="forecast-target" class="forecast__input" placeholder="65" step="0.5" oninput="recalcForecast()">
                     <span class="forecast__input-unit">кг</span>
-                    <button class="forecast__btn" onclick="recalcForecast()">Рассчитать</button>
                 </div>
             </div>
 
@@ -247,21 +246,21 @@
                         <input type="radio" name="pace" value="250" onchange="recalcForecast()">
                         <span class="forecast__pace-card">
                             <span class="forecast__pace-name">🌿 Мягкий</span>
-                            <span class="forecast__pace-desc">−250 ккал/день<br>~0.25 кг/нед</span>
+                            <span class="forecast__pace-desc" id="pace1-desc">−250 ккал/день<br>~0.25 кг/нед</span>
                         </span>
                     </label>
                     <label class="forecast__pace-opt">
                         <input type="radio" name="pace" value="500" checked onchange="recalcForecast()">
                         <span class="forecast__pace-card">
                             <span class="forecast__pace-name">⚡ Средний</span>
-                            <span class="forecast__pace-desc">−500 ккал/день<br>~0.5 кг/нед</span>
+                            <span class="forecast__pace-desc" id="pace2-desc">−500 ккал/день<br>~0.5 кг/нед</span>
                         </span>
                     </label>
                     <label class="forecast__pace-opt">
                         <input type="radio" name="pace" value="750" onchange="recalcForecast()">
                         <span class="forecast__pace-card">
                             <span class="forecast__pace-name">🔥 Жёсткий</span>
-                            <span class="forecast__pace-desc">−750 ккал/день<br>~0.75 кг/нед</span>
+                            <span class="forecast__pace-desc" id="pace3-desc">−750 ккал/день<br>~0.75 кг/нед</span>
                         </span>
                     </label>
                 </div>
@@ -549,6 +548,17 @@ function showForecast(currentWeight, goal, kcal) {
     var goalText = goal === 'lose' ? 'снижения веса' : 'набора веса';
     document.getElementById('forecast-title').textContent = '🎯 Прогноз ' + goalText;
 
+    /* Корректные подписи для набора (плюс) и похудения (минус) */
+    if (goal === 'gain') {
+        document.getElementById('pace1-desc').innerHTML = '+250 ккал/день<br>~0.25 кг/нед';
+        document.getElementById('pace2-desc').innerHTML = '+500 ккал/день<br>~0.5 кг/нед';
+        document.getElementById('pace3-desc').innerHTML = '+750 ккал/день<br>~0.75 кг/нед';
+    } else {
+        document.getElementById('pace1-desc').innerHTML = '−250 ккал/день<br>~0.25 кг/нед';
+        document.getElementById('pace2-desc').innerHTML = '−500 ккал/день<br>~0.5 кг/нед';
+        document.getElementById('pace3-desc').innerHTML = '−750 ккал/день<br>~0.75 кг/нед';
+    }
+
     /* Подставляем разумный целевой вес */
     var defaultTarget = goal === 'lose'
         ? Math.round((currentWeight - 5) * 10) / 10
@@ -623,13 +633,19 @@ function recalcForecast() {
     /* Предупреждения */
     var warnings = [];
     if (deficit === 750) {
-        warnings.push('⚠️ <b>Жёсткий темп — риск</b>: организм может сбросить мышечную массу вместо жира. Не рекомендуется дольше 4-6 недель подряд.');
+        var risk = goal === 'lose'
+            ? 'организм может сбросить мышечную массу вместо жира'
+            : 'значительный профицит может привести к набору жира, а не мышц';
+        warnings.push('⚠️ <b>Жёсткий темп — риск</b>: ' + risk + '. Не рекомендуется дольше 4-6 недель подряд.');
     }
     if (weightChangePerWeek > currentWeight * 0.01) {
         warnings.push('⚠️ Скорость изменения веса превышает 1% от массы тела в неделю — это может быть опасно для здоровья.');
     }
     if (weeks > 24) {
-        warnings.push('💡 <b>Совет</b>: для долгих периодов делайте паузы по 1-2 недели каждые 8-12 недель — питайтесь на поддержание (около ' + forecastState.maintainKcal + ' ккал). Это защитит метаболизм от замедления.');
+        var maintainNote = goal === 'lose'
+            ? 'питайтесь на поддержание (около ' + forecastState.maintainKcal + ' ккал). Это защитит метаболизм от замедления.'
+            : 'делайте паузы — питайтесь на поддержание (около ' + forecastState.maintainKcal + ' ккал). Это поможет закрепить набранный вес.';
+        warnings.push('💡 <b>Совет</b>: для долгих периодов делайте паузы по 1-2 недели каждые 8-12 недель — ' + maintainNote);
     }
     if (goal === 'lose' && targetWeight < currentWeight * 0.85) {
         warnings.push('⚠️ Целевой вес заметно ниже текущего. Убедитесь что он находится в <b>здоровом диапазоне ИМТ</b> (18.5–24.9).');

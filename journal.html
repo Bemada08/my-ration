@@ -43,6 +43,62 @@
                 <div class="weight-history" id="weight-history"></div>
             </div>
 
+            <!-- Прогноз достижения цели -->
+            <div class="journal-block forecast-block" id="goal-forecast-block" style="display:none">
+                <h2 class="journal-block__title">🎯 Прогноз достижения цели</h2>
+                <p class="journal-block__desc">Расчёт сроков на основе ваших целей и текущего веса</p>
+
+                <div class="forecast">
+                    <!-- Ввод целевого веса -->
+                    <div class="forecast__target">
+                        <label class="forecast__label">Какого веса хотите достичь?</label>
+                        <div class="forecast__input-row">
+                            <input type="number" id="goal-target" class="forecast__input" placeholder="65" step="0.5" oninput="recalcGoal()">
+                            <span class="forecast__input-unit">кг</span>
+                        </div>
+                    </div>
+
+                    <!-- Темп изменения -->
+                    <div class="forecast__pace">
+                        <div class="forecast__pace-label">Выберите темп:</div>
+                        <div class="forecast__pace-options">
+                            <label class="forecast__pace-opt">
+                                <input type="radio" name="goal-pace" value="250" onchange="recalcGoal()">
+                                <span class="forecast__pace-card">
+                                    <span class="forecast__pace-name">🌿 Мягкий</span>
+                                    <span class="forecast__pace-desc" id="goal-pace1-desc">±250 ккал/день<br>~0.25 кг/нед</span>
+                                </span>
+                            </label>
+                            <label class="forecast__pace-opt">
+                                <input type="radio" name="goal-pace" value="500" checked onchange="recalcGoal()">
+                                <span class="forecast__pace-card">
+                                    <span class="forecast__pace-name">⚡ Средний</span>
+                                    <span class="forecast__pace-desc" id="goal-pace2-desc">±500 ккал/день<br>~0.5 кг/нед</span>
+                                </span>
+                            </label>
+                            <label class="forecast__pace-opt">
+                                <input type="radio" name="goal-pace" value="750" onchange="recalcGoal()">
+                                <span class="forecast__pace-card">
+                                    <span class="forecast__pace-name">🔥 Жёсткий</span>
+                                    <span class="forecast__pace-desc" id="goal-pace3-desc">±750 ккал/день<br>~0.75 кг/нед</span>
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Результат -->
+                    <div class="forecast__result" id="goal-result"></div>
+
+                    <!-- График -->
+                    <div class="forecast__chart-wrap">
+                        <canvas id="goal-chart" width="600" height="220"></canvas>
+                    </div>
+
+                    <!-- Предупреждения -->
+                    <div class="forecast__warnings" id="goal-warnings"></div>
+                </div>
+            </div>
+
             <!-- Сегодня: вода + отметка рациона -->
             <div class="journal-block">
                 <h2 class="journal-block__title">📅 Сегодня</h2>
@@ -570,6 +626,258 @@ function waterMinus() {
 }
 
 renderWater();
+
+/* ==================== ПРОГНОЗ ДОСТИЖЕНИЯ ЦЕЛИ ==================== */
+
+var goalState = { currentWeight: 0, goal: 'lose' };
+
+function initGoalForecast() {
+    var goal = localStorage.getItem('nutriplan_goal') || '';
+    var weightStr = localStorage.getItem('nutriplan_weight') || '';
+    var weight = parseFloat(weightStr);
+
+    /* Если последний вес есть в weightLog — берём его (он актуальнее) */
+    if (weightLog.length > 0) {
+        weight = parseFloat(weightLog[weightLog.length - 1].weight) || weight;
+    }
+
+    /* Показываем блок только если цель — похудеть или набрать */
+    if ((goal !== 'lose' && goal !== 'gain') || !weight) return;
+
+    document.getElementById('goal-forecast-block').style.display = 'block';
+
+    goalState.currentWeight = weight;
+    goalState.goal = goal;
+
+    /* Корректные подписи для набора (плюс) и похудения (минус) */
+    if (goal === 'gain') {
+        document.getElementById('goal-pace1-desc').innerHTML = '+250 ккал/день<br>~0.25 кг/нед';
+        document.getElementById('goal-pace2-desc').innerHTML = '+500 ккал/день<br>~0.5 кг/нед';
+        document.getElementById('goal-pace3-desc').innerHTML = '+750 ккал/день<br>~0.75 кг/нед';
+    } else {
+        document.getElementById('goal-pace1-desc').innerHTML = '−250 ккал/день<br>~0.25 кг/нед';
+        document.getElementById('goal-pace2-desc').innerHTML = '−500 ккал/день<br>~0.5 кг/нед';
+        document.getElementById('goal-pace3-desc').innerHTML = '−750 ккал/день<br>~0.75 кг/нед';
+    }
+
+    /* Целевой вес: если уже сохранён — используем, иначе разумный default */
+    var savedTarget = localStorage.getItem('nutriplan_target_weight');
+    var defaultTarget = goal === 'lose'
+        ? Math.round((weight - 5) * 10) / 10
+        : Math.round((weight + 5) * 10) / 10;
+    document.getElementById('goal-target').value = savedTarget || defaultTarget;
+
+    /* Темп: если сохранён — используем */
+    var savedPace = localStorage.getItem('nutriplan_target_pace') || '500';
+    var paceRadios = document.getElementsByName('goal-pace');
+    for (var i = 0; i < paceRadios.length; i++) {
+        paceRadios[i].checked = (paceRadios[i].value === savedPace);
+    }
+
+    recalcGoal();
+}
+
+function recalcGoal() {
+    var currentWeight = goalState.currentWeight;
+    var goal = goalState.goal;
+    var targetWeight = parseFloat(document.getElementById('goal-target').value);
+
+    var paceRadios = document.getElementsByName('goal-pace');
+    var deficit = 500;
+    for (var i = 0; i < paceRadios.length; i++) {
+        if (paceRadios[i].checked) { deficit = parseInt(paceRadios[i].value, 10); break; }
+    }
+
+    if (targetWeight) localStorage.setItem('nutriplan_target_weight', targetWeight);
+    localStorage.setItem('nutriplan_target_pace', String(deficit));
+
+    var resultEl = document.getElementById('goal-result');
+    var warnEl = document.getElementById('goal-warnings');
+
+    if (!targetWeight || targetWeight <= 0) {
+        resultEl.innerHTML = '<p class="forecast__error">Введите целевой вес</p>';
+        warnEl.innerHTML = '';
+        clearGoalChart();
+        return;
+    }
+    if (goal === 'lose' && targetWeight >= currentWeight) {
+        resultEl.innerHTML = '<p class="forecast__error">Для похудения целевой вес должен быть меньше текущего</p>';
+        warnEl.innerHTML = '';
+        clearGoalChart();
+        return;
+    }
+    if (goal === 'gain' && targetWeight <= currentWeight) {
+        resultEl.innerHTML = '<p class="forecast__error">Для набора целевой вес должен быть больше текущего</p>';
+        warnEl.innerHTML = '';
+        clearGoalChart();
+        return;
+    }
+
+    var weightChangePerWeek = (deficit * 7) / 7700;
+    var diff = Math.abs(targetWeight - currentWeight);
+    var weeks = Math.ceil(diff / weightChangePerWeek);
+    var months = Math.round(weeks / 4.33 * 10) / 10;
+
+    var endDate = new Date();
+    endDate.setDate(endDate.getDate() + weeks * 7);
+    var monthNames = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+    var endStr = endDate.getDate() + ' ' + monthNames[endDate.getMonth()] + ' ' + endDate.getFullYear();
+
+    var goalAction = goal === 'lose' ? 'сбросить' : 'набрать';
+    var paceLabel = deficit === 250 ? 'мягком' : (deficit === 500 ? 'среднем' : 'жёстком');
+    resultEl.innerHTML =
+        '<div class="forecast__main">' +
+            '<div class="forecast__big">' + weeks + '</div>' +
+            '<div class="forecast__big-label">' + (weeks === 1 ? 'неделя' : (weeks < 5 ? 'недели' : 'недель')) + '</div>' +
+        '</div>' +
+        '<p class="forecast__summary">' +
+            'При <b>' + paceLabel + '</b> темпе вы сможете ' + goalAction + ' <b>' + diff.toFixed(1) + ' кг</b> примерно за <b>' + months + ' мес</b>. ' +
+            'Цель — к <b>' + endStr + '</b>.' +
+        '</p>';
+
+    var warnings = [];
+    if (deficit === 750) {
+        var risk = goal === 'lose'
+            ? 'организм может сбросить мышечную массу вместо жира'
+            : 'значительный профицит может привести к набору жира, а не мышц';
+        warnings.push('⚠️ <b>Жёсткий темп — риск</b>: ' + risk + '. Не рекомендуется дольше 4-6 недель подряд.');
+    }
+    if (weightChangePerWeek > currentWeight * 0.01) {
+        warnings.push('⚠️ Скорость изменения веса превышает 1% от массы тела в неделю — это может быть опасно для здоровья.');
+    }
+    if (weeks > 24) {
+        var maintainNote = goal === 'lose'
+            ? 'питайтесь на поддержание (без дефицита). Это защитит метаболизм от замедления.'
+            : 'делайте паузы — питайтесь на поддержание (без профицита). Это поможет закрепить набранный вес.';
+        warnings.push('💡 <b>Совет</b>: для долгих периодов делайте паузы по 1-2 недели каждые 8-12 недель — ' + maintainNote);
+    }
+    if (goal === 'lose' && targetWeight < currentWeight * 0.85) {
+        warnings.push('⚠️ Целевой вес заметно ниже текущего. Убедитесь что он находится в <b>здоровом диапазоне ИМТ</b> (18.5–24.9).');
+    }
+    if (warnings.length === 0 && deficit !== 750) {
+        warnings.push('✅ Темп безопасный и устойчивый. Главное — не торопиться.');
+    }
+
+    var warnHtml = '';
+    warnings.forEach(function(w) { warnHtml += '<p class="forecast__warning">' + w + '</p>'; });
+    warnEl.innerHTML = warnHtml;
+
+    drawGoalChart(currentWeight, targetWeight, weeks, weightChangePerWeek, goal);
+}
+
+function drawGoalChart(startWeight, targetWeight, weeks, paceKgWeek, goal) {
+    var canvas = document.getElementById('goal-chart');
+    if (!canvas) return;
+    var dpr = window.devicePixelRatio || 1;
+    var rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * dpr;
+    canvas.height = 220 * dpr;
+    var ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+    var W = rect.width;
+    var H = 220;
+    ctx.clearRect(0, 0, W, H);
+
+    var pad = {l: 50, r: 20, t: 20, b: 40};
+    var chartW = W - pad.l - pad.r;
+    var chartH = H - pad.t - pad.b;
+
+    var minW = Math.min(startWeight, targetWeight) - 1;
+    var maxW = Math.max(startWeight, targetWeight) + 1;
+
+    function x(week) { return pad.l + (week / weeks) * chartW; }
+    function y(weight) { return pad.t + (1 - (weight - minW) / (maxW - minW)) * chartH; }
+
+    ctx.strokeStyle = '#e8ddd0';
+    ctx.lineWidth = 1;
+    ctx.fillStyle = '#8a7565';
+    ctx.font = '11px Nunito, sans-serif';
+    ctx.textAlign = 'right';
+    for (var i = 0; i <= 4; i++) {
+        var yVal = minW + (maxW - minW) * (1 - i / 4);
+        var yPos = pad.t + (i / 4) * chartH;
+        ctx.beginPath();
+        ctx.moveTo(pad.l, yPos);
+        ctx.lineTo(W - pad.r, yPos);
+        ctx.stroke();
+        ctx.fillText(yVal.toFixed(1) + ' кг', pad.l - 6, yPos + 4);
+    }
+
+    ctx.textAlign = 'center';
+    var step = Math.max(1, Math.ceil(weeks / 6));
+    for (var w = 0; w <= weeks; w += step) {
+        ctx.fillText(w + ' нед', x(w), H - pad.b + 18);
+    }
+
+    var primaryColor = goal === 'lose' ? '#6b8e5e' : '#b5651d';
+    var gradient = ctx.createLinearGradient(0, pad.t, 0, H - pad.b);
+    gradient.addColorStop(0, primaryColor + '44');
+    gradient.addColorStop(1, primaryColor + '08');
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.moveTo(x(0), y(startWeight));
+    for (var wk = 0; wk <= weeks; wk++) {
+        var weightW = goal === 'lose'
+            ? startWeight - paceKgWeek * wk
+            : startWeight + paceKgWeek * wk;
+        if (goal === 'lose' && weightW < targetWeight) weightW = targetWeight;
+        if (goal === 'gain' && weightW > targetWeight) weightW = targetWeight;
+        ctx.lineTo(x(wk), y(weightW));
+    }
+    ctx.lineTo(x(weeks), H - pad.b);
+    ctx.lineTo(x(0), H - pad.b);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.strokeStyle = primaryColor;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(x(0), y(startWeight));
+    for (var wk2 = 0; wk2 <= weeks; wk2++) {
+        var w2 = goal === 'lose'
+            ? startWeight - paceKgWeek * wk2
+            : startWeight + paceKgWeek * wk2;
+        if (goal === 'lose' && w2 < targetWeight) w2 = targetWeight;
+        if (goal === 'gain' && w2 > targetWeight) w2 = targetWeight;
+        ctx.lineTo(x(wk2), y(w2));
+    }
+    ctx.stroke();
+
+    ctx.fillStyle = '#3b2f2f';
+    ctx.beginPath();
+    ctx.arc(x(0), y(startWeight), 5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.arc(x(0), y(startWeight), 2.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = primaryColor;
+    ctx.beginPath();
+    ctx.arc(x(weeks), y(targetWeight), 6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.arc(x(weeks), y(targetWeight), 3, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#3b2f2f';
+    ctx.font = 'bold 12px Nunito, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('Старт ' + startWeight + 'кг', x(0) + 8, y(startWeight) - 8);
+    ctx.textAlign = 'right';
+    ctx.fillStyle = primaryColor;
+    ctx.fillText('Цель ' + targetWeight + 'кг 🎯', x(weeks) - 8, y(targetWeight) - 8);
+}
+
+function clearGoalChart() {
+    var canvas = document.getElementById('goal-chart');
+    if (!canvas) return;
+    var ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+initGoalForecast();
 </script>
 <script src="common.js"></script>
 </body>
