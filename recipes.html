@@ -884,6 +884,10 @@ function editCard(btn) {
     document.getElementById('m-kcal').value = meta[1] ? meta[1].textContent.replace('🔥 ','').replace(' ккал','') : '';
     document.getElementById('m-portions').value = meta[2] ? meta[2].textContent.replace('🍽 ','') : '';
 
+    /* Подгружаем ингредиенты и шаги из data-атрибутов */
+    document.getElementById('m-ingredients').value = card.getAttribute('data-ingredients') || '';
+    document.getElementById('m-steps').value = card.getAttribute('data-steps') || '';
+
     var badge = card.querySelector('.recipe-card__badge').textContent;
     var catKey = Object.keys(catMap).find(function(k) { return catMap[k].label === badge; }) || 'breakfast';
     document.getElementById('m-category').value = catKey;
@@ -998,6 +1002,8 @@ function saveRecipe() {
     var kcal = document.getElementById('m-kcal').value.trim();
     var portions = document.getElementById('m-portions').value.trim();
     var imageData = document.getElementById('m-image-data').value;
+    var ingredients = document.getElementById('m-ingredients').value.trim();
+    var steps = document.getElementById('m-steps').value.trim();
 
     if (!name) { alert('Введите название блюда'); return; }
 
@@ -1024,8 +1030,10 @@ function saveRecipe() {
             badge.textContent = cat.label;
             imgDiv.appendChild(badge);
         }
-        /* Сохраняем картинку как data-атрибут карточки */
+        /* Сохраняем все данные в data-атрибуты карточки */
         editingCard.setAttribute('data-image', imageData);
+        editingCard.setAttribute('data-ingredients', ingredients);
+        editingCard.setAttribute('data-steps', steps);
 
         var metas = editingCard.querySelectorAll('.recipe-card__meta span');
         if (metas[0]) metas[0].textContent = '⏱ ' + (time || '— мин');
@@ -1039,6 +1047,8 @@ function saveRecipe() {
         card.setAttribute('data-id', nextId++);
         card.setAttribute('data-user', '1'); /* помечаем как пользовательскую */
         if (imageData) card.setAttribute('data-image', imageData);
+        card.setAttribute('data-ingredients', ingredients);
+        card.setAttribute('data-steps', steps);
         card.innerHTML =
             '<div class="recipe-card__img" style="' + imgStyle + '">' +
                 '<span class="recipe-card__badge">' + cat.label + '</span>' +
@@ -1086,9 +1096,77 @@ document.addEventListener('click', function(e) {
     if (e.target.closest('.card-btn')) return;
     var card = e.target.closest('.recipe-card');
     if (!card) return;
+    /* Встроенный рецепт — открываем отдельную страницу */
     var href = card.getAttribute('data-href');
-    if (href) window.location.href = href;
+    if (href) { window.location.href = href; return; }
+    /* Пользовательский рецепт — открываем модалку просмотра */
+    if (card.getAttribute('data-user') === '1') {
+        openRecipeView(card);
+    }
 });
+
+/* ==================== ПРОСМОТР ПОЛЬЗОВАТЕЛЬСКОГО РЕЦЕПТА ==================== */
+function openRecipeView(card) {
+    var name = card.querySelector('.recipe-card__title').textContent;
+    var desc = card.querySelector('.recipe-card__desc').textContent;
+    var meta = card.querySelectorAll('.recipe-card__meta span');
+    var time = meta[0] ? meta[0].textContent : '';
+    var kcal = meta[1] ? meta[1].textContent : '';
+    var portions = meta[2] ? meta[2].textContent : '';
+    var ingredients = card.getAttribute('data-ingredients') || '';
+    var steps = card.getAttribute('data-steps') || '';
+    var image = card.getAttribute('data-image') || '';
+    var badge = card.querySelector('.recipe-card__badge').textContent;
+
+    var imgHtml = image
+        ? '<div class="rv-image" style="background-image:url(\'' + image + '\')"></div>'
+        : '<div class="rv-image rv-image--empty">🍽</div>';
+
+    var ingredientsHtml = ingredients
+        ? '<ul>' + ingredients.split('\n').filter(function(l){return l.trim()}).map(function(l){return '<li>' + l + '</li>'}).join('') + '</ul>'
+        : '<p class="rv-empty">Ингредиенты не указаны</p>';
+
+    var stepsHtml = steps
+        ? '<ol>' + steps.split('\n').filter(function(l){return l.trim()}).map(function(l){return '<li>' + l + '</li>'}).join('') + '</ol>'
+        : '<p class="rv-empty">Шаги приготовления не указаны</p>';
+
+    var modal = document.createElement('div');
+    modal.className = 'modal-overlay modal-overlay--open recipe-view-modal';
+    modal.onclick = function(e) { if (e.target === modal) closeRecipeView(); };
+    modal.innerHTML =
+        '<div class="modal modal--wide">' +
+            '<div class="modal__header">' +
+                '<h2 class="modal__title">' + name + '</h2>' +
+                '<button class="modal__close" onclick="closeRecipeView()">✕</button>' +
+            '</div>' +
+            '<div class="modal__body">' +
+                imgHtml +
+                '<div class="rv-badge">' + badge + '</div>' +
+                (desc && desc !== 'Без описания' ? '<p class="rv-desc">' + desc + '</p>' : '') +
+                '<div class="rv-meta">' +
+                    '<span>' + time + '</span>' +
+                    '<span>' + kcal + '</span>' +
+                    '<span>' + portions + '</span>' +
+                '</div>' +
+                '<h3 class="rv-section-title">🥕 Ингредиенты</h3>' +
+                ingredientsHtml +
+                '<h3 class="rv-section-title">📝 Приготовление</h3>' +
+                stepsHtml +
+                '<div class="rv-actions">' +
+                    '<button class="btn btn--outline" onclick="closeRecipeView()">Закрыть</button>' +
+                    '<button class="btn btn--primary" onclick="window.print()">🖨 Распечатать</button>' +
+                '</div>' +
+            '</div>' +
+        '</div>';
+    document.body.appendChild(modal);
+    document.body.style.overflow = 'hidden';
+}
+
+function closeRecipeView() {
+    var modal = document.querySelector('.recipe-view-modal');
+    if (modal) modal.remove();
+    document.body.style.overflow = '';
+}
 
 /* ==================== ПОИСК ПО РЕЦЕПТАМ ==================== */
 function searchRecipes() {
@@ -1162,7 +1240,9 @@ function saveUserRecipes() {
             time: meta[0] ? meta[0].textContent.replace('⏱ ','') : '',
             kcal: meta[1] ? meta[1].textContent.replace('🔥 ','').replace(' ккал','') : '',
             portions: meta[2] ? meta[2].textContent.replace('🍽 ','') : '',
-            image: card.getAttribute('data-image') || ''
+            image: card.getAttribute('data-image') || '',
+            ingredients: card.getAttribute('data-ingredients') || '',
+            steps: card.getAttribute('data-steps') || ''
         });
     });
     try {
@@ -1195,6 +1275,8 @@ function loadUserRecipes() {
         card.setAttribute('data-id', r.id || (nextId++));
         card.setAttribute('data-user', '1');
         if (r.image) card.setAttribute('data-image', r.image);
+        card.setAttribute('data-ingredients', r.ingredients || '');
+        card.setAttribute('data-steps', r.steps || '');
         card.innerHTML =
             '<div class="recipe-card__img" style="' + imgStyle + '">' +
                 '<span class="recipe-card__badge">' + cat.label + '</span>' +
