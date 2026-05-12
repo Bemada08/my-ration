@@ -32,7 +32,7 @@
         <input type="text" id="recipe-search" class="filters__search-input" placeholder="🔍 Поиск рецепта..." oninput="searchRecipes()">
         <button type="button" class="filters__search-clear" onclick="clearSearch()" title="Очистить">✕</button>
     </div>
-    <button class="btn btn--primary filters__add" onclick="openModal()">+ Добавить рецепт</button>
+    <button id="btn-add-recipe" class="btn btn--primary filters__add" onclick="openModal()" title="Создать свой рецепт">+ Добавить рецепт</button>
 </div>
 
 <div class="search-empty" id="search-empty" style="display:none">
@@ -163,9 +163,11 @@ function setupFirebaseSync() {
             isFirebaseAvailable = true;
             window.firebaseAPI.onUserChange(async function(user) {
                 currentUser = user;
+                updateAddButtonState();
 
                 if (user) {
                     console.log('👤 Залогинен, загружаю рецепты из облака');
+                    /* Перенос локальных рецептов из старых версий сайта */
                     var localRaw = localStorage.getItem(USER_RECIPES_KEY);
                     if (localRaw) {
                         try {
@@ -181,9 +183,8 @@ function setupFirebaseSync() {
                     }
                     await reloadRecipesFromCloud();
                 } else {
-                    console.log('🔓 Не залогинен, использую локальное хранилище');
+                    console.log('🔓 Не залогинен — пользовательские рецепты не показываются');
                     clearUserCards();
-                    loadUserRecipes();
                 }
             });
             return;
@@ -200,6 +201,23 @@ function setupFirebaseSync() {
     }
 
     check();
+}
+
+/* Обновляет внешний вид кнопки «Добавить рецепт» в зависимости от статуса логина */
+function updateAddButtonState() {
+    var btn = document.getElementById('btn-add-recipe');
+    if (!btn) return;
+
+    if (window.firebaseUnavailable) {
+        /* Офлайн — скрываем кнопку */
+        btn.style.display = 'none';
+    } else {
+        /* Кнопка всегда активна — проверка авторизации происходит при клике */
+        btn.style.display = '';
+        btn.classList.remove('btn--disabled');
+        btn.title = 'Создать свой рецепт';
+        btn.textContent = '+ Добавить рецепт';
+    }
 }
 
 // Очищает все пользовательские карточки с экрана
@@ -320,12 +338,64 @@ function renderSystemRecipes() {
 
 /* ==================== МОДАЛКА ДОБАВЛЕНИЯ/РЕДАКТИРОВАНИЯ ==================== */
 function openModal() {
+    /* Требуем авторизацию для создания рецептов */
+    if (!isFirebaseAvailable || !currentUser) {
+        if (window.firebaseUnavailable) {
+            alert('Создание рецептов доступно только в онлайн-режиме.\n\nЗайдите на сайт через интернет, чтобы создавать свои рецепты.');
+        } else {
+            showLoginRequiredModal();
+        }
+        return;
+    }
+
     editingCard = null;
     document.getElementById('modal-title').textContent = 'Новый рецепт';
     document.getElementById('modal-save').textContent = 'Добавить рецепт';
     clearForm();
     document.getElementById('modal').classList.add('modal-overlay--open');
     document.body.style.overflow = 'hidden';
+}
+
+/* Красивая модалка «Требуется регистрация» вместо обычного confirm */
+function showLoginRequiredModal() {
+    /* Если модалка уже показана — не дублируем */
+    if (document.getElementById('login-required-modal')) return;
+
+    var overlay = document.createElement('div');
+    overlay.id = 'login-required-modal';
+    overlay.className = 'modal-overlay modal-overlay--open';
+    overlay.innerHTML =
+        '<div class="modal login-req-modal">' +
+            '<button class="modal__close" type="button" onclick="closeLoginRequiredModal()">✕</button>' +
+            '<div class="login-req-icon">🔒</div>' +
+            '<h2 class="login-req-title">Требуется регистрация</h2>' +
+            '<p class="login-req-desc">' +
+                'Чтобы создавать собственные рецепты, нужно войти в аккаунт. ' +
+                'Все ваши рецепты будут сохраняться в облаке и будут доступны с любого устройства.' +
+            '</p>' +
+            '<div class="login-req-features">' +
+                '<div class="login-req-feature">☁️ Хранение в облаке</div>' +
+                '<div class="login-req-feature">📱 Доступ с любого устройства</div>' +
+                '<div class="login-req-feature">🔐 Защита данных</div>' +
+            '</div>' +
+            '<div class="login-req-actions">' +
+                '<button class="btn btn--outline" type="button" onclick="closeLoginRequiredModal()">Не сейчас</button>' +
+                '<button class="btn btn--primary" type="button" onclick="goToAuth()">Войти / Зарегистрироваться</button>' +
+            '</div>' +
+        '</div>';
+    overlay.onclick = function(e) { if (e.target === overlay) closeLoginRequiredModal(); };
+    document.body.appendChild(overlay);
+    document.body.style.overflow = 'hidden';
+}
+
+function closeLoginRequiredModal() {
+    var m = document.getElementById('login-required-modal');
+    if (m) m.remove();
+    document.body.style.overflow = '';
+}
+
+function goToAuth() {
+    window.location.href = 'auth.html';
 }
 
 function editCard(btn) {
@@ -703,6 +773,7 @@ function loadUserRecipes() {
 
 /* ==================== ИНИЦИАЛИЗАЦИЯ ==================== */
 renderSystemRecipes();
+updateAddButtonState(); /* По умолчанию кнопка заблокирована — пока Firebase не подтвердит логин */
 /* Рецепты пользователя (облако или localStorage) загружает setupFirebaseSync() — не дублируем */
 
 /* Прямая ссылка ?recipe=slug */

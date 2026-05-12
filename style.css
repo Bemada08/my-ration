@@ -2299,3 +2299,70 @@ a.sp-meal--link:hover .sp-meal__name { color:var(--primary); }
 .recipe-card {
     position: relative; /* нужно для абсолютного позиционирования метки */
 }
+/* Заблокированная кнопка добавления рецепта (для незалогиненных) */
+.btn--disabled{
+    background:var(--bg) !important;
+    color:var(--text-light) !important;
+    border:1px solid var(--border) !important;
+    cursor:not-allowed;
+    opacity:.7;
+}
+.btn--disabled:hover{
+    background:var(--bg) !important;
+    transform:none !important;
+    box-shadow:none !important;
+}
+
+/* ============ Модалка "Требуется регистрация" ============ */
+.login-req-modal{
+    max-width:440px;
+    text-align:center;
+    padding:32px 28px 28px;
+    position:relative;
+}
+.login-req-modal .modal__close{
+    position:absolute;top:14px;right:14px;
+}
+.login-req-icon{
+    font-size:3.5rem;
+    margin-bottom:14px;
+    line-height:1;
+}
+.login-req-title{
+    font-family:var(--font-display);
+    font-size:1.6rem;
+    color:var(--dark);
+    margin:0 0 12px;
+}
+.login-req-desc{
+    color:var(--text);
+    font-size:.95rem;
+    line-height:1.6;
+    margin:0 0 22px;
+}
+.login-req-features{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    background:var(--cream);
+    padding:16px 20px;
+    border-radius:12px;
+    margin-bottom:24px;
+}
+.login-req-feature{
+    font-size:.92rem;
+    color:var(--text);
+    text-align:left;
+}
+.login-req-actions{
+    display:flex;
+    gap:10px;
+}
+.login-req-actions .btn{
+    flex:1;
+}
+@media (max-width:480px){
+    .login-req-modal{padding:24px 20px}
+    .login-req-title{font-size:1.35rem}
+    .login-req-actions{flex-direction:column}
+}
