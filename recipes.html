@@ -147,44 +147,59 @@ var currentUser = null;
 
 // Ждём готовности Firebase
 function setupFirebaseSync() {
-    if (!window.firebaseAPI) {
-        setTimeout(setupFirebaseSync, 100);
-        return;
-    }
-    isFirebaseAvailable = true;
-    
-    // Подписываемся на изменения авторизации
-    window.firebaseAPI.onUserChange(async function(user) {
-        currentUser = user;
-        
-        if (user) {
-            // Пользователь залогинен — загружаем из Firestore
-            console.log('👤 Залогинен, загружаю рецепты из облака');
-            
-            // Проверяем есть ли локальные рецепты для миграции
-            var localRaw = localStorage.getItem(USER_RECIPES_KEY);
-            if (localRaw) {
-                try {
-                    var localRecipes = JSON.parse(localRaw);
-                    if (Array.isArray(localRecipes) && localRecipes.length > 0) {
-                        if (confirm('У вас есть ' + localRecipes.length + ' локальных рецептов. Перенести их в облачный аккаунт?')) {
-                            await migrateLocalToCloud(localRecipes);
-                        } else {
-                            // Пользователь отказался — очищаем локалку чтобы не предлагать опять
-                            localStorage.removeItem(USER_RECIPES_KEY);
-                        }
-                    }
-                } catch (e) {}
-            }
-            
-            await reloadRecipesFromCloud();
-        } else {
-            // Пользователь не залогинен — показываем встроенные + localStorage
-            console.log('🔓 Не залогинен, использую локальное хранилище');
-            clearUserCards();
-            loadUserRecipes(); // существующая функция
+    var attempts = 0;
+    var MAX_ATTEMPTS = 30; /* 30 × 100мс = 3 секунды максимум */
+
+    function check() {
+        /* Сценарий 1: Firebase явно отключён (file:// или ошибка загрузки) */
+        if (window.firebaseUnavailable) {
+            console.log('💾 Офлайн-режим: загружаю рецепты из localStorage');
+            loadUserRecipes();
+            return;
         }
-    });
+
+        /* Сценарий 2: Firebase успел загрузиться */
+        if (window.firebaseAPI) {
+            isFirebaseAvailable = true;
+            window.firebaseAPI.onUserChange(async function(user) {
+                currentUser = user;
+
+                if (user) {
+                    console.log('👤 Залогинен, загружаю рецепты из облака');
+                    var localRaw = localStorage.getItem(USER_RECIPES_KEY);
+                    if (localRaw) {
+                        try {
+                            var localRecipes = JSON.parse(localRaw);
+                            if (Array.isArray(localRecipes) && localRecipes.length > 0) {
+                                if (confirm('У вас есть ' + localRecipes.length + ' локальных рецептов. Перенести их в облачный аккаунт?')) {
+                                    await migrateLocalToCloud(localRecipes);
+                                } else {
+                                    localStorage.removeItem(USER_RECIPES_KEY);
+                                }
+                            }
+                        } catch (e) {}
+                    }
+                    await reloadRecipesFromCloud();
+                } else {
+                    console.log('🔓 Не залогинен, использую локальное хранилище');
+                    clearUserCards();
+                    loadUserRecipes();
+                }
+            });
+            return;
+        }
+
+        /* Сценарий 3: ждём загрузки Firebase, но не вечно */
+        attempts++;
+        if (attempts >= MAX_ATTEMPTS) {
+            console.log('⏱ Firebase не загрузился за 3 сек — переходим в офлайн-режим');
+            loadUserRecipes();
+            return;
+        }
+        setTimeout(check, 100);
+    }
+
+    check();
 }
 
 // Очищает все пользовательские карточки с экрана
@@ -698,7 +713,7 @@ renderSystemRecipes();
 })();
 
 </script>
-<script type="module" src="firebase-config.js"></script>
+<script src="firebase-loader.js"></script>
 <script src="common.js"></script>
 </body>
 </html>

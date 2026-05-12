@@ -20,6 +20,11 @@
 <section class="auth-section">
     <div class="container">
         <div class="auth-card">
+            <div id="offline-banner" style="display:none;padding:18px 20px;background:#fff4e0;border-left:4px solid #d4a843;font-size:.92rem;line-height:1.5">
+                ⚠️ <b>Офлайн-режим.</b> Регистрация и вход недоступны без интернета или при открытии файла напрямую.
+                Все рецепты и план питания сохраняются локально в браузере.
+                <a href="index.html" style="color:var(--primary);font-weight:600">← Вернуться на главную</a>
+            </div>
             <div class="auth-tabs">
                 <button class="auth-tab auth-tab--active" id="tab-login" onclick="showTab('login')">Вход</button>
                 <button class="auth-tab" id="tab-register" onclick="showTab('register')">Регистрация</button>
@@ -50,7 +55,7 @@
     </div>
 </section>
 
-<script type="module" src="firebase-config.js"></script>
+<script src="firebase-loader.js"></script>
 <script>
 function showTab(tab) {
     document.getElementById('tab-login').classList.toggle('auth-tab--active', tab === 'login');
@@ -151,6 +156,33 @@ window.addEventListener('firebaseReady', function() {
         if (user) window.location.href = 'index.html';
     });
 });
+
+/* Проверяем доступность Firebase. Если нет — показываем баннер и блокируем формы */
+(function() {
+    var attempts = 0;
+    function check() {
+        if (window.firebaseUnavailable) {
+            document.getElementById('offline-banner').style.display = 'block';
+            /* Делаем кнопки и поля неактивными */
+            document.querySelectorAll('.auth-input, .auth-submit, .auth-tab, .auth-forgot').forEach(function(el) {
+                el.disabled = true;
+                el.style.opacity = '0.5';
+                el.style.pointerEvents = 'none';
+            });
+            return;
+        }
+        if (window.firebaseAPI) return; /* Firebase загрузился — всё ок */
+        attempts++;
+        if (attempts > 30) {
+            /* 3 секунды ждали — Firebase так и не подгрузился */
+            window.firebaseUnavailable = true;
+            check();
+            return;
+        }
+        setTimeout(check, 100);
+    }
+    check();
+})();
 </script>
 <script src="common.js"></script>
 </body>

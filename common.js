@@ -48,7 +48,18 @@
         nav.appendChild(btn);
 
         function watchAuth() {
+            /* Firebase явно отключён (file://) — скрываем кнопку */
+            if (window.firebaseUnavailable) {
+                btn.style.display = 'none';
+                return;
+            }
             if (!window.firebaseAPI) {
+                /* Ждём максимум 3 секунды */
+                watchAuth.attempts = (watchAuth.attempts || 0) + 1;
+                if (watchAuth.attempts > 30) {
+                    btn.style.display = 'none';
+                    return;
+                }
                 setTimeout(watchAuth, 100);
                 return;
             }
