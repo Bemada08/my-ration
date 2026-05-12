@@ -460,81 +460,10 @@ async function saveRecipe() {
 
     if (!name) { alert('Введите название блюда'); return; }
 
-    var cat = catMap[catKey];
-    var imgStyle = imageData
-        ? 'background-image:url(\'' + imageData + '\');background-size:cover;background-position:center'
-        : 'background:' + cat.gradient;
+    var isCloudEdit = editingCard && editingCard.getAttribute('data-cloud') === '1';
+    var isLocalEdit = editingCard && !isCloudEdit;
 
-    if (editingCard) {
-        editingCard.className = 'recipe-card ' + cat.css;
-        editingCard.querySelector('.recipe-card__title').textContent = name;
-        editingCard.querySelector('.recipe-card__desc').textContent = desc || 'Без описания';
-        editingCard.querySelector('.recipe-card__badge').textContent = cat.label;
-
-        var imgDiv = editingCard.querySelector('.recipe-card__img');
-        imgDiv.style.cssText = imgStyle;
-        if (!imgDiv.querySelector('.recipe-card__badge')) {
-            var badge = document.createElement('span');
-            badge.className = 'recipe-card__badge';
-            badge.textContent = cat.label;
-            imgDiv.appendChild(badge);
-        }
-        editingCard.setAttribute('data-image', imageData);
-        editingCard.setAttribute('data-ingredients', ingredients);
-        editingCard.setAttribute('data-steps', steps);
-        editingCard.setAttribute('data-prot', prot);
-        editingCard.setAttribute('data-fat', fat);
-        editingCard.setAttribute('data-carbs', carbs);
-
-        var metas = editingCard.querySelectorAll('.recipe-card__meta span');
-        if (metas[0]) metas[0].textContent = '⏱ ' + (time || '— мин');
-        if (metas[1]) metas[1].textContent = '🔥 ' + (kcal || '—') + ' ккал';
-        if (metas[2]) metas[2].textContent = '🍽 ' + (portions || '—');
-
-    } else {
-        var card = document.createElement('div');
-        card.className = 'recipe-card ' + cat.css;
-        card.setAttribute('data-id', nextId++);
-        card.setAttribute('data-user', '1');
-        if (imageData) card.setAttribute('data-image', imageData);
-        card.setAttribute('data-ingredients', ingredients);
-        card.setAttribute('data-steps', steps);
-        card.setAttribute('data-prot', prot);
-        card.setAttribute('data-fat', fat);
-        card.setAttribute('data-carbs', carbs);
-        card.style.cursor = 'pointer';
-        card.innerHTML =
-            '<div class="recipe-card__img" style="' + imgStyle + '">' +
-                '<span class="recipe-card__badge">' + esc(cat.label) + '</span>' +
-            '</div>' +
-            '<div class="recipe-card__body">' +
-                '<h3 class="recipe-card__title">' + esc(name) + '</h3>' +
-                '<p class="recipe-card__desc">' + esc(desc || 'Без описания') + '</p>' +
-                '<div class="recipe-card__meta">' +
-                    '<span>⏱ ' + esc(time || '— мин') + '</span>' +
-                    '<span>🔥 ' + esc(kcal || '—') + ' ккал</span>' +
-                    '<span>🍽 ' + esc(portions || '—') + '</span>' +
-                '</div>' +
-                '<div class="recipe-card__actions">' +
-                    '<button class="card-btn card-btn--edit" onclick="event.stopPropagation();editCard(this)">✏️ Редактировать</button>' +
-                    '<button class="card-btn card-btn--delete" onclick="event.stopPropagation();deleteCard(this)">🗑 Удалить</button>' +
-                '</div>' +
-            '</div>';
-
-        document.getElementById('recipes-grid').appendChild(card);
-
-        card.style.opacity = '0';
-        card.style.transform = 'translateY(20px)';
-        setTimeout(function() {
-            card.style.transition = 'opacity 0.4s, transform 0.4s';
-            card.style.opacity = '1';
-            card.style.transform = 'translateY(0)';
-        }, 50);
-
-        document.getElementById('filter-all').checked = true;
-    }
-
-    // Сохранение: в облако если залогинен, иначе в localStorage
+    /* === ОБЛАЧНОЕ СОХРАНЕНИЕ === */
     if (isFirebaseAvailable && currentUser) {
         try {
             var recipeData = {
@@ -544,31 +473,77 @@ async function saveRecipe() {
                 time: time || '',
                 kcal: kcal || '',
                 portions: portions || '',
+                prot: prot || '',
+                fat: fat || '',
+                carbs: carbs || '',
                 image: imageData || '',
                 ingredients: ingredients,
                 steps: steps
             };
-            
-            if (editingCard && editingCard.getAttribute('data-cloud') === '1') {
-                // Обновляем существующий в Firestore
+
+            if (isCloudEdit) {
                 var docId = editingCard.getAttribute('data-id');
                 await window.firebaseAPI.updateRecipe(docId, recipeData);
             } else {
-                // Создаём новый в Firestore
-                var docRef = await window.firebaseAPI.addRecipe(recipeData);
-                // Перезагружаем чтобы карточка получила правильный ID из облака
-                await reloadRecipesFromCloud();
+                await window.firebaseAPI.addRecipe(recipeData);
             }
+            /* Перерисовываем целиком из облака — никаких дублей */
+            await reloadRecipesFromCloud();
         } catch (err) {
             console.error('Ошибка сохранения в облако:', err);
             alert('Не удалось сохранить рецепт в облако. Сохранено только локально.');
-            saveUserRecipes();
+            saveLocalAndRerender(catKey, name, desc, time, kcal, portions, prot, fat, carbs, imageData, ingredients, steps, isLocalEdit);
+        }
+        closeModal();
+        return;
+    }
+
+    /* === ЛОКАЛЬНОЕ СОХРАНЕНИЕ === */
+    saveLocalAndRerender(catKey, name, desc, time, kcal, portions, prot, fat, carbs, imageData, ingredients, steps, isLocalEdit);
+    closeModal();
+}
+
+/* Сохранение в localStorage + полная перерисовка пользовательских карточек */
+function saveLocalAndRerender(catKey, name, desc, time, kcal, portions, prot, fat, carbs, imageData, ingredients, steps, isLocalEdit) {
+    var raw = localStorage.getItem(USER_RECIPES_KEY);
+    var data = [];
+    try { data = raw ? JSON.parse(raw) : []; } catch (e) { data = []; }
+    if (!Array.isArray(data)) data = [];
+
+    if (isLocalEdit) {
+        /* Редактирование локального рецепта — находим по data-id */
+        var editId = editingCard.getAttribute('data-id');
+        var idx = data.findIndex(function(r) { return String(r.id) === String(editId); });
+        if (idx !== -1) {
+            data[idx] = {
+                id: editId, cat: catKey, name: name, desc: desc, time: time,
+                kcal: kcal, portions: portions, prot: prot, fat: fat, carbs: carbs,
+                image: imageData, ingredients: ingredients, steps: steps
+            };
         }
     } else {
-        saveUserRecipes();
+        /* Новый локальный рецепт */
+        data.push({
+            id: nextId++, cat: catKey, name: name, desc: desc, time: time,
+            kcal: kcal, portions: portions, prot: prot, fat: fat, carbs: carbs,
+            image: imageData, ingredients: ingredients, steps: steps
+        });
     }
-    
-    closeModal();
+
+    try {
+        localStorage.setItem(USER_RECIPES_KEY, JSON.stringify(data));
+    } catch (e) {
+        alert('Не удалось сохранить рецепт — закончилось место в браузере. Попробуйте удалить старые рецепты или использовать картинки меньшего размера.');
+        return;
+    }
+
+    /* Полная перерисовка пользовательских карточек — никаких дублей */
+    clearUserCards();
+    loadUserRecipes();
+
+    /* Сбросить фильтр на «Все» если есть */
+    var allFilter = document.getElementById('filter-all');
+    if (allFilter) allFilter.checked = true;
 }
 
 /* Закрытие модалки добавления по Escape (модалка просмотра обрабатывается в recipe-view.js) */
@@ -713,18 +688,7 @@ function loadUserRecipes() {
 
 /* ==================== ИНИЦИАЛИЗАЦИЯ ==================== */
 renderSystemRecipes();
-// Загружаем локально только если Firebase не доступен или пользователь не залогинен
-// Если залогинен — рецепты подтянутся через setupFirebaseSync
-if (!window.firebaseAPI) {
-    // Firebase ещё не загрузился — пробуем подождать
-    setTimeout(function() {
-        if (!window.firebaseAuth || !window.firebaseAuth.currentUser) {
-            loadUserRecipes();
-        }
-    }, 500);
-} else if (!window.firebaseAuth.currentUser) {
-    loadUserRecipes();
-}
+/* Рецепты пользователя (облако или localStorage) загружает setupFirebaseSync() — не дублируем */
 
 /* Прямая ссылка ?recipe=slug */
 (function() {
