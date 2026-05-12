@@ -187,68 +187,77 @@
 
 <footer class="footer"><div class="container footer__inner"><div class="footer__brand"><a href="index.html" class="logo"><span class="logo__icon">🍳</span><span class="logo__text">МойРацион</span></a><p class="footer__desc">Сервис для планирования здорового рациона питания. Дипломный проект, 2026.</p></div><div class="footer__links"><h4 class="footer__heading">Навигация</h4><a href="index.html" class="footer__link">Главная</a><a href="planner.html" class="footer__link">Планировщик</a><a href="recipes.html" class="footer__link">Рецепты</a><a href="journal.html" class="footer__link">Дневник</a><a href="calculator.html" class="footer__link">Калькулятор</a></div><div class="footer__links"><h4 class="footer__heading">Информация</h4><a href="#" class="footer__link">О проекте</a><a href="#" class="footer__link">Контакты</a></div></div><div class="container"><div class="footer__bottom"><p>© 2026 МойРацион. Все права защищены.</p></div></div></footer>
 
+<script src="recipes-data.js"></script>
+<script src="recipe-view.js"></script>
 <script>
+/* Извлекает slug из href вида 'recipes.html?recipe=slug' */
+function getRecipeSlug(href) {
+    if (!href) return '';
+    var m = String(href).match(/[?&]recipe=([^&]+)/);
+    return m ? decodeURIComponent(m[1]) : '';
+}
+
 /* ===== БАЗА РЕЦЕПТОВ С ССЫЛКАМИ ===== */
 var recipes = [
-    { name:'Овсяная каша с ягодами и мёдом', cat:'breakfast', kcal:350, prot:12, fat:8, carbs:55, href:'recipe-oatmeal.html', img:'images/oatmeal.jpg' },
-    { name:'Сырники со сметаной',            cat:'breakfast', kcal:390, prot:22, fat:16, carbs:38, href:'recipe-syrniki.html', img:'images/syrniki.jpg' },
-    { name:'Омлет с овощами и сыром',        cat:'breakfast', kcal:310, prot:22, fat:20, carbs:8, href:'recipe-omlet.html', img:'images/omlet.jpg' },
-    { name:'Смузи-боул с гранолой',          cat:'breakfast', kcal:340, prot:10, fat:9, carbs:56, href:'recipe-smoothie-bowl.html', img:'images/smoothie-bowl.jpg' },
-    { name:'Гранола с йогуртом и бананом',   cat:'breakfast', kcal:360, prot:11, fat:12, carbs:52, href:'recipe-granola.html', img:'images/granola.jpg' },
-    { name:'Куриный суп с лапшой',           cat:'lunch', kcal:420, prot:28, fat:12, carbs:48, href:'recipe-chicken-soup.html', img:'images/chicken-soup.jpg' },
-    { name:'Борщ со сметаной',               cat:'lunch', kcal:380, prot:24, fat:14, carbs:38, href:'recipe-borsch.html', img:'images/borsch.jpg' },
-    { name:'Тыквенный крем-суп',             cat:'lunch', kcal:300, prot:8, fat:14, carbs:35, href:'recipe-pumpkin-soup.html', img:'images/pumpkin-soup.jpg' },
-    { name:'Куриная грудка с рисом и овощами', cat:'lunch', kcal:420, prot:35, fat:10, carbs:45, href:'recipe-chicken-rice.html', img:'images/chicken-rice.jpg' },
-    { name:'Паста с томатным соусом и базиликом', cat:'lunch', kcal:450, prot:14, fat:12, carbs:68, href:'recipe-pasta.html', img:'images/pasta.jpg' },
-    { name:'Греческий салат с курицей',       cat:'dinner', kcal:450, prot:32, fat:28, carbs:14, href:'recipe-greek-salad.html', img:'images/greek-salad.jpg' },
-    { name:'Цезарь с креветками',             cat:'dinner', kcal:430, prot:30, fat:26, carbs:18, href:'recipe-caesar.html', img:'images/caesar.jpg' },
-    { name:'Запечённый лосось с лимоном',     cat:'dinner', kcal:390, prot:34, fat:22, carbs:6, href:'recipe-salmon.html', img:'images/salmon.jpg' },
-    { name:'Котлеты из индейки с овощами',    cat:'dinner', kcal:370, prot:28, fat:14, carbs:28, href:'recipe-turkey-cutlets.html', img:'images/turkey-cutlets.jpg' },
-    { name:'Рыба на пару с брокколи',         cat:'dinner', kcal:280, prot:30, fat:8, carbs:12, href:'recipe-steamed-fish.html', img:'images/steamed-fish.jpg' },
-    { name:'Йогурт с орехами и мёдом',       cat:'snack', kcal:180, prot:8, fat:10, carbs:14, href:'recipe-yogurt.html', img:'images/yogurt.jpg' },
-    { name:'Творожная запеканка с изюмом',    cat:'snack', kcal:220, prot:14, fat:8, carbs:24, href:'recipe-zapekanka.html', img:'images/zapekanka.jpg' },
-    { name:'Фруктовый смузи',                cat:'snack', kcal:160, prot:4, fat:2, carbs:34, href:'recipe-fruit-smoothie.html', img:'images/fruit-smoothie.jpg' },
-    { name:'Горсть миндаля с сухофруктами',  cat:'snack', kcal:200, prot:6, fat:14, carbs:16, href:'recipe-almonds.html', img:'images/almonds.jpg' },
-    { name:'Яблоко с арахисовой пастой',     cat:'snack', kcal:190, prot:5, fat:10, carbs:24, href:'recipe-apple-peanut.html', img:'images/apple-peanut.jpg' },
-    { name:'Блины с творогом и ягодами', cat:'breakfast', kcal:380, prot:14, fat:12, carbs:50, href:'recipe-bliny.html', img:'images/bliny.jpg' },
-    { name:'Каша рисовая на молоке', cat:'breakfast', kcal:320, prot:8, fat:10, carbs:48, href:'recipe-rice-porridge.html', img:'images/rice-porridge.jpg' },
-    { name:'Тосты с авокадо и яйцом', cat:'breakfast', kcal:340, prot:14, fat:20, carbs:26, href:'recipe-avocado-toast.html', img:'images/avocado-toast.jpg' },
-    { name:'Творог с мёдом и фруктами', cat:'breakfast', kcal:280, prot:18, fat:9, carbs:32, href:'recipe-cottage-cheese.html', img:'images/cottage-cheese.jpg' },
-    { name:'Яичница с тостами и зеленью', cat:'breakfast', kcal:330, prot:16, fat:18, carbs:24, href:'recipe-fried-eggs.html', img:'images/fried-eggs.jpg' },
-    { name:'Грибной суп-пюре', cat:'lunch', kcal:320, prot:10, fat:16, carbs:32, href:'recipe-mushroom-soup.html', img:'images/mushroom-soup.jpg' },
-    { name:'Плов с курицей', cat:'lunch', kcal:480, prot:22, fat:16, carbs:60, href:'recipe-plov.html', img:'images/plov.jpg' },
-    { name:'Гречка с говядиной', cat:'lunch', kcal:440, prot:30, fat:14, carbs:48, href:'recipe-buckwheat-beef.html', img:'images/buckwheat-beef.jpg' },
-    { name:'Щи из свежей капусты', cat:'lunch', kcal:350, prot:18, fat:12, carbs:38, href:'recipe-shchi.html', img:'images/shchi.jpg' },
-    { name:'Рис с овощами и соевым соусом', cat:'lunch', kcal:400, prot:12, fat:10, carbs:64, href:'recipe-fried-rice.html', img:'images/fried-rice.jpg' },
-    { name:'Куриное филе на гриле', cat:'dinner', kcal:350, prot:38, fat:12, carbs:10, href:'recipe-grilled-chicken.html', img:'images/grilled-chicken.jpg' },
-    { name:'Тушёные овощи с фасолью', cat:'dinner', kcal:260, prot:14, fat:6, carbs:38, href:'recipe-veggie-stew.html', img:'images/veggie-stew.jpg' },
-    { name:'Салат с тунцом и яйцом', cat:'dinner', kcal:380, prot:28, fat:22, carbs:12, href:'recipe-tuna-salad.html', img:'images/tuna-salad.jpg' },
-    { name:'Фаршированные перцы', cat:'dinner', kcal:400, prot:24, fat:16, carbs:36, href:'recipe-stuffed-peppers.html', img:'images/stuffed-peppers.jpg' },
-    { name:'Кабачковые оладьи со сметаной', cat:'dinner', kcal:290, prot:10, fat:14, carbs:30, href:'recipe-zucchini-fritters.html', img:'images/zucchini-fritters.jpg' },
-    { name:'Банановый хлеб', cat:'snack', kcal:240, prot:6, fat:10, carbs:34, href:'recipe-banana-bread.html', img:'images/banana-bread.jpg' },
-    { name:'Кефир с ягодами', cat:'snack', kcal:140, prot:6, fat:3, carbs:22, href:'recipe-kefir-berries.html', img:'images/kefir-berries.jpg' },
-    { name:'Морковные палочки с хумусом', cat:'snack', kcal:170, prot:6, fat:8, carbs:18, href:'recipe-carrot-hummus.html', img:'images/carrot-hummus.jpg' },
-    { name:'Овсяное печенье', cat:'snack', kcal:210, prot:4, fat:8, carbs:32, href:'recipe-oat-cookies.html', img:'images/oat-cookies.jpg' },
-    { name:'Сырники запечённые', cat:'snack', kcal:250, prot:16, fat:8, carbs:28, href:'recipe-baked-syrniki.html', img:'images/baked-syrniki.jpg' },
-    { name:'Оладьи с мёдом и сметаной', cat:'breakfast', kcal:370, prot:10, fat:14, carbs:50, href:'recipe-pancakes.html', img:'images/pancakes.jpg' },
-    { name:'Горячий бутерброд с сыром', cat:'breakfast', kcal:350, prot:16, fat:18, carbs:28, href:'recipe-cheese-sandwich.html', img:'images/cheese-sandwich.jpg' },
-    { name:'Гречневая каша с молоком', cat:'breakfast', kcal:310, prot:12, fat:8, carbs:48, href:'recipe-buckwheat-porridge.html', img:'images/buckwheat-porridge.jpg' },
-    { name:'Ролл из лаваша с яйцом и овощами', cat:'breakfast', kcal:320, prot:14, fat:16, carbs:28, href:'recipe-egg-wrap.html', img:'images/egg-wrap.jpg' },
-    { name:'Мюсли с молоком и ягодами', cat:'breakfast', kcal:340, prot:10, fat:10, carbs:52, href:'recipe-muesli-bowl.html', img:'images/muesli-bowl.jpg' },
-    { name:'Куриные котлеты с пюре', cat:'lunch', kcal:460, prot:28, fat:18, carbs:42, href:'recipe-chicken-cutlets.html', img:'images/chicken-cutlets.jpg' },
-    { name:'Уха из сёмги', cat:'lunch', kcal:360, prot:26, fat:14, carbs:28, href:'recipe-fish-soup.html', img:'images/fish-soup.jpg' },
-    { name:'Суп из чечевицы', cat:'lunch', kcal:330, prot:20, fat:8, carbs:46, href:'recipe-lentil-soup.html', img:'images/lentil-soup.jpg' },
-    { name:'Жаркое из говядины', cat:'lunch', kcal:470, prot:32, fat:20, carbs:36, href:'recipe-beef-stew.html', img:'images/beef-stew.jpg' },
-    { name:'Паста с овощами и песто', cat:'lunch', kcal:420, prot:14, fat:16, carbs:54, href:'recipe-veggie-pasta.html', img:'images/veggie-pasta.jpg' },
-    { name:'Запечённая треска с овощами', cat:'dinner', kcal:300, prot:32, fat:10, carbs:16, href:'recipe-baked-cod.html', img:'images/baked-cod.jpg' },
-    { name:'Тёплый салат с курицей и киноа', cat:'dinner', kcal:410, prot:30, fat:18, carbs:30, href:'recipe-chicken-salad.html', img:'images/chicken-salad.jpg' },
-    { name:'Ризотто с грибами', cat:'dinner', kcal:430, prot:12, fat:16, carbs:58, href:'recipe-mushroom-risotto.html', img:'images/mushroom-risotto.jpg' },
-    { name:'Рулетики из баклажанов с сыром', cat:'dinner', kcal:270, prot:14, fat:16, carbs:18, href:'recipe-eggplant-rolls.html', img:'images/eggplant-rolls.jpg' },
-    { name:'Энергетические шарики', cat:'snack', kcal:180, prot:6, fat:10, carbs:18, href:'recipe-energy-balls.html', img:'images/energy-balls.jpg' },
-    { name:'Фруктовый салат с мятой', cat:'snack', kcal:150, prot:2, fat:1, carbs:34, href:'recipe-fruit-salad.html', img:'images/fruit-salad.jpg' },
-    { name:'Сырные крекеры', cat:'snack', kcal:230, prot:10, fat:14, carbs:16, href:'recipe-cheese-crackers.html', img:'images/cheese-crackers.jpg' },
-    { name:'Чиа-пудинг с манго', cat:'snack', kcal:200, prot:6, fat:8, carbs:26, href:'recipe-chia-pudding.html', img:'images/chia-pudding.jpg' },
-    { name:'Протеиновый коктейль', cat:'snack', kcal:220, prot:20, fat:6, carbs:24, href:'recipe-protein-smoothie.html', img:'images/protein-smoothie.jpg' }
+    { name:'Овсяная каша с ягодами и мёдом', cat:'breakfast', kcal:350, prot:12, fat:8, carbs:55, href:'recipes.html?recipe=oatmeal', img:'images/oatmeal.jpg' },
+    { name:'Сырники со сметаной',            cat:'breakfast', kcal:390, prot:22, fat:16, carbs:38, href:'recipes.html?recipe=syrniki', img:'images/syrniki.jpg' },
+    { name:'Омлет с овощами и сыром',        cat:'breakfast', kcal:310, prot:22, fat:20, carbs:8, href:'recipes.html?recipe=omlet', img:'images/omlet.jpg' },
+    { name:'Смузи-боул с гранолой',          cat:'breakfast', kcal:340, prot:10, fat:9, carbs:56, href:'recipes.html?recipe=smoothie-bowl', img:'images/smoothie-bowl.jpg' },
+    { name:'Гранола с йогуртом и бананом',   cat:'breakfast', kcal:360, prot:11, fat:12, carbs:52, href:'recipes.html?recipe=granola', img:'images/granola.jpg' },
+    { name:'Куриный суп с лапшой',           cat:'lunch', kcal:420, prot:28, fat:12, carbs:48, href:'recipes.html?recipe=chicken-soup', img:'images/chicken-soup.jpg' },
+    { name:'Борщ со сметаной',               cat:'lunch', kcal:380, prot:24, fat:14, carbs:38, href:'recipes.html?recipe=borsch', img:'images/borsch.jpg' },
+    { name:'Тыквенный крем-суп',             cat:'lunch', kcal:300, prot:8, fat:14, carbs:35, href:'recipes.html?recipe=pumpkin-soup', img:'images/pumpkin-soup.jpg' },
+    { name:'Куриная грудка с рисом и овощами', cat:'lunch', kcal:420, prot:35, fat:10, carbs:45, href:'recipes.html?recipe=chicken-rice', img:'images/chicken-rice.jpg' },
+    { name:'Паста с томатным соусом и базиликом', cat:'lunch', kcal:450, prot:14, fat:12, carbs:68, href:'recipes.html?recipe=pasta', img:'images/pasta.jpg' },
+    { name:'Греческий салат с курицей',       cat:'dinner', kcal:450, prot:32, fat:28, carbs:14, href:'recipes.html?recipe=greek-salad', img:'images/greek-salad.jpg' },
+    { name:'Цезарь с креветками',             cat:'dinner', kcal:430, prot:30, fat:26, carbs:18, href:'recipes.html?recipe=caesar', img:'images/caesar.jpg' },
+    { name:'Запечённый лосось с лимоном',     cat:'dinner', kcal:390, prot:34, fat:22, carbs:6, href:'recipes.html?recipe=salmon', img:'images/salmon.jpg' },
+    { name:'Котлеты из индейки с овощами',    cat:'dinner', kcal:370, prot:28, fat:14, carbs:28, href:'recipes.html?recipe=turkey-cutlets', img:'images/turkey-cutlets.jpg' },
+    { name:'Рыба на пару с брокколи',         cat:'dinner', kcal:280, prot:30, fat:8, carbs:12, href:'recipes.html?recipe=steamed-fish', img:'images/steamed-fish.jpg' },
+    { name:'Йогурт с орехами и мёдом',       cat:'snack', kcal:180, prot:8, fat:10, carbs:14, href:'recipes.html?recipe=yogurt', img:'images/yogurt.jpg' },
+    { name:'Творожная запеканка с изюмом',    cat:'snack', kcal:220, prot:14, fat:8, carbs:24, href:'recipes.html?recipe=zapekanka', img:'images/zapekanka.jpg' },
+    { name:'Фруктовый смузи',                cat:'snack', kcal:160, prot:4, fat:2, carbs:34, href:'recipes.html?recipe=fruit-smoothie', img:'images/fruit-smoothie.jpg' },
+    { name:'Горсть миндаля с сухофруктами',  cat:'snack', kcal:200, prot:6, fat:14, carbs:16, href:'recipes.html?recipe=almonds', img:'images/almonds.jpg' },
+    { name:'Яблоко с арахисовой пастой',     cat:'snack', kcal:190, prot:5, fat:10, carbs:24, href:'recipes.html?recipe=apple-peanut', img:'images/apple-peanut.jpg' },
+    { name:'Блины с творогом и ягодами', cat:'breakfast', kcal:380, prot:14, fat:12, carbs:50, href:'recipes.html?recipe=bliny', img:'images/bliny.jpg' },
+    { name:'Каша рисовая на молоке', cat:'breakfast', kcal:320, prot:8, fat:10, carbs:48, href:'recipes.html?recipe=rice-porridge', img:'images/rice-porridge.jpg' },
+    { name:'Тосты с авокадо и яйцом', cat:'breakfast', kcal:340, prot:14, fat:20, carbs:26, href:'recipes.html?recipe=avocado-toast', img:'images/avocado-toast.jpg' },
+    { name:'Творог с мёдом и фруктами', cat:'breakfast', kcal:280, prot:18, fat:9, carbs:32, href:'recipes.html?recipe=cottage-cheese', img:'images/cottage-cheese.jpg' },
+    { name:'Яичница с тостами и зеленью', cat:'breakfast', kcal:330, prot:16, fat:18, carbs:24, href:'recipes.html?recipe=fried-eggs', img:'images/fried-eggs.jpg' },
+    { name:'Грибной суп-пюре', cat:'lunch', kcal:320, prot:10, fat:16, carbs:32, href:'recipes.html?recipe=mushroom-soup', img:'images/mushroom-soup.jpg' },
+    { name:'Плов с курицей', cat:'lunch', kcal:480, prot:22, fat:16, carbs:60, href:'recipes.html?recipe=plov', img:'images/plov.jpg' },
+    { name:'Гречка с говядиной', cat:'lunch', kcal:440, prot:30, fat:14, carbs:48, href:'recipes.html?recipe=buckwheat-beef', img:'images/buckwheat-beef.jpg' },
+    { name:'Щи из свежей капусты', cat:'lunch', kcal:350, prot:18, fat:12, carbs:38, href:'recipes.html?recipe=shchi', img:'images/shchi.jpg' },
+    { name:'Рис с овощами и соевым соусом', cat:'lunch', kcal:400, prot:12, fat:10, carbs:64, href:'recipes.html?recipe=fried-rice', img:'images/fried-rice.jpg' },
+    { name:'Куриное филе на гриле', cat:'dinner', kcal:350, prot:38, fat:12, carbs:10, href:'recipes.html?recipe=grilled-chicken', img:'images/grilled-chicken.jpg' },
+    { name:'Тушёные овощи с фасолью', cat:'dinner', kcal:260, prot:14, fat:6, carbs:38, href:'recipes.html?recipe=veggie-stew', img:'images/veggie-stew.jpg' },
+    { name:'Салат с тунцом и яйцом', cat:'dinner', kcal:380, prot:28, fat:22, carbs:12, href:'recipes.html?recipe=tuna-salad', img:'images/tuna-salad.jpg' },
+    { name:'Фаршированные перцы', cat:'dinner', kcal:400, prot:24, fat:16, carbs:36, href:'recipes.html?recipe=stuffed-peppers', img:'images/stuffed-peppers.jpg' },
+    { name:'Кабачковые оладьи со сметаной', cat:'dinner', kcal:290, prot:10, fat:14, carbs:30, href:'recipes.html?recipe=zucchini-fritters', img:'images/zucchini-fritters.jpg' },
+    { name:'Банановый хлеб', cat:'snack', kcal:240, prot:6, fat:10, carbs:34, href:'recipes.html?recipe=banana-bread', img:'images/banana-bread.jpg' },
+    { name:'Кефир с ягодами', cat:'snack', kcal:140, prot:6, fat:3, carbs:22, href:'recipes.html?recipe=kefir-berries', img:'images/kefir-berries.jpg' },
+    { name:'Морковные палочки с хумусом', cat:'snack', kcal:170, prot:6, fat:8, carbs:18, href:'recipes.html?recipe=carrot-hummus', img:'images/carrot-hummus.jpg' },
+    { name:'Овсяное печенье', cat:'snack', kcal:210, prot:4, fat:8, carbs:32, href:'recipes.html?recipe=oat-cookies', img:'images/oat-cookies.jpg' },
+    { name:'Сырники запечённые', cat:'snack', kcal:250, prot:16, fat:8, carbs:28, href:'recipes.html?recipe=baked-syrniki', img:'images/baked-syrniki.jpg' },
+    { name:'Оладьи с мёдом и сметаной', cat:'breakfast', kcal:370, prot:10, fat:14, carbs:50, href:'recipes.html?recipe=pancakes', img:'images/pancakes.jpg' },
+    { name:'Горячий бутерброд с сыром', cat:'breakfast', kcal:350, prot:16, fat:18, carbs:28, href:'recipes.html?recipe=cheese-sandwich', img:'images/cheese-sandwich.jpg' },
+    { name:'Гречневая каша с молоком', cat:'breakfast', kcal:310, prot:12, fat:8, carbs:48, href:'recipes.html?recipe=buckwheat-porridge', img:'images/buckwheat-porridge.jpg' },
+    { name:'Ролл из лаваша с яйцом и овощами', cat:'breakfast', kcal:320, prot:14, fat:16, carbs:28, href:'recipes.html?recipe=egg-wrap', img:'images/egg-wrap.jpg' },
+    { name:'Мюсли с молоком и ягодами', cat:'breakfast', kcal:340, prot:10, fat:10, carbs:52, href:'recipes.html?recipe=muesli-bowl', img:'images/muesli-bowl.jpg' },
+    { name:'Куриные котлеты с пюре', cat:'lunch', kcal:460, prot:28, fat:18, carbs:42, href:'recipes.html?recipe=chicken-cutlets', img:'images/chicken-cutlets.jpg' },
+    { name:'Уха из сёмги', cat:'lunch', kcal:360, prot:26, fat:14, carbs:28, href:'recipes.html?recipe=fish-soup', img:'images/fish-soup.jpg' },
+    { name:'Суп из чечевицы', cat:'lunch', kcal:330, prot:20, fat:8, carbs:46, href:'recipes.html?recipe=lentil-soup', img:'images/lentil-soup.jpg' },
+    { name:'Жаркое из говядины', cat:'lunch', kcal:470, prot:32, fat:20, carbs:36, href:'recipes.html?recipe=beef-stew', img:'images/beef-stew.jpg' },
+    { name:'Паста с овощами и песто', cat:'lunch', kcal:420, prot:14, fat:16, carbs:54, href:'recipes.html?recipe=veggie-pasta', img:'images/veggie-pasta.jpg' },
+    { name:'Запечённая треска с овощами', cat:'dinner', kcal:300, prot:32, fat:10, carbs:16, href:'recipes.html?recipe=baked-cod', img:'images/baked-cod.jpg' },
+    { name:'Тёплый салат с курицей и киноа', cat:'dinner', kcal:410, prot:30, fat:18, carbs:30, href:'recipes.html?recipe=chicken-salad', img:'images/chicken-salad.jpg' },
+    { name:'Ризотто с грибами', cat:'dinner', kcal:430, prot:12, fat:16, carbs:58, href:'recipes.html?recipe=mushroom-risotto', img:'images/mushroom-risotto.jpg' },
+    { name:'Рулетики из баклажанов с сыром', cat:'dinner', kcal:270, prot:14, fat:16, carbs:18, href:'recipes.html?recipe=eggplant-rolls', img:'images/eggplant-rolls.jpg' },
+    { name:'Энергетические шарики', cat:'snack', kcal:180, prot:6, fat:10, carbs:18, href:'recipes.html?recipe=energy-balls', img:'images/energy-balls.jpg' },
+    { name:'Фруктовый салат с мятой', cat:'snack', kcal:150, prot:2, fat:1, carbs:34, href:'recipes.html?recipe=fruit-salad', img:'images/fruit-salad.jpg' },
+    { name:'Сырные крекеры', cat:'snack', kcal:230, prot:10, fat:14, carbs:16, href:'recipes.html?recipe=cheese-crackers', img:'images/cheese-crackers.jpg' },
+    { name:'Чиа-пудинг с манго', cat:'snack', kcal:200, prot:6, fat:8, carbs:26, href:'recipes.html?recipe=chia-pudding', img:'images/chia-pudding.jpg' },
+    { name:'Протеиновый коктейль', cat:'snack', kcal:220, prot:20, fat:6, carbs:24, href:'recipes.html?recipe=protein-smoothie', img:'images/protein-smoothie.jpg' }
 ];
 var catLabels = { breakfast:'Завтрак', lunch:'Обед', dinner:'Ужин', snack:'Перекус' };
 var days = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
@@ -281,7 +290,14 @@ function renderDay() {
             item.className = 'meal-item' + (hasLink ? ' meal-item--link' : '');
             if (hasLink) {
                 item.onclick = function(e) {
-                    if (!e.target.classList.contains('meal-item__del')) window.location.href = meal.href;
+                    if (e.target.classList.contains('meal-item__del')) return;
+                    var slug = getRecipeSlug(meal.href);
+                    if (slug && window.RecipeView) {
+                        window.RecipeView.openBySlug(slug);
+                    } else if (meal.href) {
+                        /* fallback на переход, если модуль не загрузился */
+                        window.location.href = meal.href;
+                    }
                 };
             }
             var imgHtml = meal.img
@@ -670,31 +686,31 @@ function closeRecsModal() {
 var samplePlans = {
     lose: {
         meals: [
-            {slot:'Завтрак', name:'Омлет с овощами и сыром', kcal:310, img:'images/omlet.jpg', href:'recipe-omlet.html'},
-            {slot:'Обед', name:'Тыквенный крем-суп', kcal:300, img:'images/pumpkin-soup.jpg', href:'recipe-pumpkin-soup.html'},
-            {slot:'Ужин', name:'Рыба на пару с брокколи', kcal:280, img:'images/steamed-fish.jpg', href:'recipe-steamed-fish.html'},
-            {slot:'Перекус', name:'Фруктовый смузи', kcal:160, img:'images/fruit-smoothie.jpg', href:'recipe-fruit-smoothie.html'},
-            {slot:'Перекус', name:'Йогурт с орехами и мёдом', kcal:180, img:'images/yogurt.jpg', href:'recipe-yogurt.html'}
+            {slot:'Завтрак', name:'Омлет с овощами и сыром', kcal:310, img:'images/omlet.jpg', href:'recipes.html?recipe=omlet'},
+            {slot:'Обед', name:'Тыквенный крем-суп', kcal:300, img:'images/pumpkin-soup.jpg', href:'recipes.html?recipe=pumpkin-soup'},
+            {slot:'Ужин', name:'Рыба на пару с брокколи', kcal:280, img:'images/steamed-fish.jpg', href:'recipes.html?recipe=steamed-fish'},
+            {slot:'Перекус', name:'Фруктовый смузи', kcal:160, img:'images/fruit-smoothie.jpg', href:'recipes.html?recipe=fruit-smoothie'},
+            {slot:'Перекус', name:'Йогурт с орехами и мёдом', kcal:180, img:'images/yogurt.jpg', href:'recipes.html?recipe=yogurt'}
         ]
     },
     maintain: {
         meals: [
-            {slot:'Завтрак', name:'Овсяная каша с ягодами и мёдом', kcal:350, img:'images/oatmeal.jpg', href:'recipe-oatmeal.html'},
-            {slot:'Обед', name:'Куриная грудка с рисом и овощами', kcal:420, img:'images/chicken-rice.jpg', href:'recipe-chicken-rice.html'},
-            {slot:'Ужин', name:'Греческий салат с курицей', kcal:450, img:'images/greek-salad.jpg', href:'recipe-greek-salad.html'},
-            {slot:'Перекус', name:'Гранола с йогуртом и бананом', kcal:360, img:'images/granola.jpg', href:'recipe-granola.html'},
-            {slot:'Перекус', name:'Яблоко с арахисовой пастой', kcal:190, img:'images/apple-peanut.jpg', href:'recipe-apple-peanut.html'}
+            {slot:'Завтрак', name:'Овсяная каша с ягодами и мёдом', kcal:350, img:'images/oatmeal.jpg', href:'recipes.html?recipe=oatmeal'},
+            {slot:'Обед', name:'Куриная грудка с рисом и овощами', kcal:420, img:'images/chicken-rice.jpg', href:'recipes.html?recipe=chicken-rice'},
+            {slot:'Ужин', name:'Греческий салат с курицей', kcal:450, img:'images/greek-salad.jpg', href:'recipes.html?recipe=greek-salad'},
+            {slot:'Перекус', name:'Гранола с йогуртом и бананом', kcal:360, img:'images/granola.jpg', href:'recipes.html?recipe=granola'},
+            {slot:'Перекус', name:'Яблоко с арахисовой пастой', kcal:190, img:'images/apple-peanut.jpg', href:'recipes.html?recipe=apple-peanut'}
         ]
     },
     gain: {
         meals: [
-            {slot:'Завтрак', name:'Сырники со сметаной', kcal:390, img:'images/syrniki.jpg', href:'recipe-syrniki.html'},
-            {slot:'Завтрак', name:'Смузи-боул с гранолой', kcal:340, img:'images/smoothie-bowl.jpg', href:'recipe-smoothie-bowl.html'},
-            {slot:'Обед', name:'Паста с томатным соусом и базиликом', kcal:450, img:'images/pasta.jpg', href:'recipe-pasta.html'},
-            {slot:'Обед', name:'Борщ со сметаной', kcal:380, img:'images/borsch.jpg', href:'recipe-borsch.html'},
-            {slot:'Ужин', name:'Цезарь с креветками', kcal:430, img:'images/caesar.jpg', href:'recipe-caesar.html'},
-            {slot:'Перекус', name:'Горсть миндаля с сухофруктами', kcal:200, img:'images/almonds.jpg', href:'recipe-almonds.html'},
-            {slot:'Перекус', name:'Творожная запеканка с изюмом', kcal:220, img:'images/zapekanka.jpg', href:'recipe-zapekanka.html'}
+            {slot:'Завтрак', name:'Сырники со сметаной', kcal:390, img:'images/syrniki.jpg', href:'recipes.html?recipe=syrniki'},
+            {slot:'Завтрак', name:'Смузи-боул с гранолой', kcal:340, img:'images/smoothie-bowl.jpg', href:'recipes.html?recipe=smoothie-bowl'},
+            {slot:'Обед', name:'Паста с томатным соусом и базиликом', kcal:450, img:'images/pasta.jpg', href:'recipes.html?recipe=pasta'},
+            {slot:'Обед', name:'Борщ со сметаной', kcal:380, img:'images/borsch.jpg', href:'recipes.html?recipe=borsch'},
+            {slot:'Ужин', name:'Цезарь с креветками', kcal:430, img:'images/caesar.jpg', href:'recipes.html?recipe=caesar'},
+            {slot:'Перекус', name:'Горсть миндаля с сухофруктами', kcal:200, img:'images/almonds.jpg', href:'recipes.html?recipe=almonds'},
+            {slot:'Перекус', name:'Творожная запеканка с изюмом', kcal:220, img:'images/zapekanka.jpg', href:'recipes.html?recipe=zapekanka'}
         ]
     }
 };
@@ -712,7 +728,7 @@ function openPlanModal(type) {
     var total = 0;
     plan.meals.forEach(function(m) {
         total += m.kcal;
-        html += '<a href="' + m.href + '" class="sp-meal sp-meal--link">' +
+        html += '<a href="' + (m.href || '#') + '" class="sp-meal sp-meal--link" data-slug="' + (getRecipeSlug(m.href) || '') + '">' +
             '<div class="sp-meal__img" style="background-image:url(\'' + m.img + '\')"></div>' +
             '<span class="sp-meal__slot">' + m.slot + '</span>' +
             '<span class="sp-meal__name">' + m.name + '</span>' +
@@ -1335,7 +1351,19 @@ function downloadShoppingPDF() {
     w.document.close();
     setTimeout(function() { w.print(); }, 300);
 }
+
+/* Перехват клика по блюду в готовом плане — открываем модалку вместо перехода */
+document.addEventListener('click', function(e) {
+    var link = e.target.closest('.sp-meal--link');
+    if (!link) return;
+    var slug = link.getAttribute('data-slug');
+    if (slug && window.RecipeView) {
+        e.preventDefault();
+        window.RecipeView.openBySlug(slug);
+    }
+});
 </script>
+<script type="module" src="firebase-config.js"></script>
 <script src="common.js"></script>
 </body>
 </html>

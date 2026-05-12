@@ -35,6 +35,48 @@
         nav.appendChild(btn);
     }
 
+    /* ========== КНОПКА «ВОЙТИ / ПРОФИЛЬ» ========== */
+    function initAuthButton() {
+        if (window.location.pathname.indexOf('auth.html') !== -1) return;
+        var nav = document.querySelector('.header .nav');
+        if (!nav) return;
+
+        var btn = document.createElement('a');
+        btn.className = 'nav__link nav__auth';
+        btn.href = 'auth.html';
+        btn.textContent = '👤 Войти';
+        nav.appendChild(btn);
+
+        function watchAuth() {
+            if (!window.firebaseAPI) {
+                setTimeout(watchAuth, 100);
+                return;
+            }
+            window.firebaseAPI.onUserChange(function(user) {
+                if (user) {
+                    var nickname = user.email.split('@')[0];
+                    btn.textContent = '👤 ' + nickname;
+                    btn.href = '#';
+                    btn.title = 'Выйти из аккаунта (' + user.email + ')';
+                    btn.onclick = function(e) {
+                        e.preventDefault();
+                        if (confirm('Выйти из аккаунта?')) {
+                            window.firebaseAPI.logout().then(function() {
+                                window.location.reload();
+                            });
+                        }
+                    };
+                } else {
+                    btn.textContent = '👤 Войти';
+                    btn.href = 'auth.html';
+                    btn.title = '';
+                    btn.onclick = null;
+                }
+            });
+        }
+        watchAuth();
+    }
+
     /* ========== МОБИЛЬНОЕ МЕНЮ-БУРГЕР ========== */
     function initBurgerMenu() {
         var header = document.querySelector('.header__inner');
@@ -79,12 +121,12 @@
     /* ========== ИНИЦИАЛИЗАЦИЯ ========== */
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', function() {
-            initBurgerMenu();
             initRestartQuiz();
+            initAuthButton();
         });
     } else {
-        initBurgerMenu();
         initRestartQuiz();
+        initAuthButton();
     }
 })();
 

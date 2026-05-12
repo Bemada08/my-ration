@@ -19,6 +19,42 @@
         <!-- ===== ЛЕВАЯ КОЛОНКА ===== -->
         <div class="journal-main">
 
+            <!-- Баланс за сегодня (из калькуляторов) -->
+            <div class="journal-block balance-block" id="balance-block" style="display:none">
+                <h2 class="journal-block__title">⚖️ Баланс за сегодня</h2>
+                <p class="journal-block__desc">Сводка из «<a href="calculator.html" class="link">Калькуляторов</a>» — что съели, что потратили</p>
+
+                <div class="balance-grid">
+                    <div class="balance-item balance-item--eaten">
+                        <div class="balance-item__head">🍽 Съедено</div>
+                        <div class="balance-item__val" id="bal-eaten">0 <span>ккал</span></div>
+                        <div class="balance-item__sub" id="bal-eaten-sub"></div>
+                    </div>
+                    <div class="balance-item balance-item--burned">
+                        <div class="balance-item__head">🔥 Сожжено</div>
+                        <div class="balance-item__val" id="bal-burned">0 <span>ккал</span></div>
+                        <div class="balance-item__sub" id="bal-burned-sub"></div>
+                    </div>
+                    <div class="balance-item balance-item--net" id="bal-net-card">
+                        <div class="balance-item__head">📊 Баланс</div>
+                        <div class="balance-item__val" id="bal-net">0 <span>ккал</span></div>
+                        <div class="balance-item__sub" id="bal-net-sub"></div>
+                    </div>
+                </div>
+
+                <div class="balance-progress" id="balance-progress" style="display:none">
+                    <div class="balance-progress__head">
+                        <span>Прогресс к норме</span>
+                        <span id="bal-progress-text">0 / 2000 ккал</span>
+                    </div>
+                    <div class="balance-progress__track"><div class="balance-progress__fill" id="bal-progress-fill"></div></div>
+                </div>
+
+                <div class="balance-actions">
+                    <a href="calculator.html" class="btn btn--outline">Открыть калькуляторы →</a>
+                </div>
+            </div>
+
             <!-- Трекер веса -->
             <div class="journal-block">
                 <h2 class="journal-block__title">📊 Трекер веса</h2>
@@ -245,6 +281,10 @@ function addWeight() {
 
     if (!w || w < 20 || w > 300) {
         alert('Введите корректный вес (20–300 кг)');
+        return;
+    }
+    if (d > todayISO()) {
+        alert('Нельзя добавить запись с датой в будущем');
         return;
     }
 
@@ -545,12 +585,95 @@ function resetJournal() {
     renderStats();
 }
 
+/* ========== БАЛАНС ЗА СЕГОДНЯ (связь с калькуляторами) ========== */
+function renderBalance() {
+    function fmtKcal(n) { return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' '); }
+
+    var eaten = 0, eatenItems = 0;
+    try {
+        var fraw = localStorage.getItem('nutriplan_food_today');
+        if (fraw) {
+            var fdata = JSON.parse(fraw);
+            if (fdata.date === todayISO() && Array.isArray(fdata.items)) {
+                eatenItems = fdata.items.length;
+                eaten = fdata.items.reduce(function(s, x) { return s + (x.kcal || 0); }, 0);
+            }
+        }
+    } catch(e) {}
+
+    var burned = 0, burnedItems = 0;
+    try {
+        var araw = localStorage.getItem('nutriplan_activity_today');
+        if (araw) {
+            var adata = JSON.parse(araw);
+            if (adata.date === todayISO() && Array.isArray(adata.items)) {
+                burnedItems = adata.items.length;
+                burned = adata.items.reduce(function(s, x) { return s + (x.kcal || 0); }, 0);
+            }
+        }
+    } catch(e) {}
+
+    var block = document.getElementById('balance-block');
+    if (!block) return;
+
+    /* Прячем блок, если данных вообще нет */
+    if (eaten === 0 && burned === 0) {
+        block.style.display = 'none';
+        return;
+    }
+    block.style.display = '';
+
+    document.getElementById('bal-eaten').innerHTML = fmtKcal(eaten) + ' <span>ккал</span>';
+    document.getElementById('bal-eaten-sub').textContent = eatenItems > 0 ? eatenItems + ' ' + plural(eatenItems, 'продукт', 'продукта', 'продуктов') : 'нет записей';
+
+    document.getElementById('bal-burned').innerHTML = fmtKcal(burned) + ' <span>ккал</span>';
+    document.getElementById('bal-burned-sub').textContent = burnedItems > 0 ? burnedItems + ' ' + plural(burnedItems, 'тренировка', 'тренировки', 'тренировок') : 'нет записей';
+
+    var net = eaten - burned;
+    document.getElementById('bal-net').innerHTML = (net >= 0 ? '+' : '−') + fmtKcal(Math.abs(net)) + ' <span>ккал</span>';
+
+    /* Подсветка карточки баланса в зависимости от нормы */
+    var normKcal = parseFloat(localStorage.getItem('nutriplan_kcal'));
+    var netCard = document.getElementById('bal-net-card');
+    netCard.classList.remove('balance-item--ok','balance-item--over','balance-item--under');
+    var netSub = '';
+    if (normKcal) {
+        var diff = net - normKcal;
+        var pctDiff = Math.abs(diff) / normKcal * 100;
+        if (pctDiff <= 10) { netCard.classList.add('balance-item--ok');    netSub = 'в пределах нормы ✓'; }
+        else if (diff > 0)  { netCard.classList.add('balance-item--over'); netSub = '+' + fmtKcal(diff) + ' ккал выше нормы'; }
+        else                { netCard.classList.add('balance-item--under');netSub = fmtKcal(Math.abs(diff)) + ' ккал ниже нормы'; }
+
+        document.getElementById('balance-progress').style.display = '';
+        var pct = Math.min(100, (net / normKcal) * 100);
+        document.getElementById('bal-progress-fill').style.width = Math.max(0, pct) + '%';
+        document.getElementById('bal-progress-text').textContent = fmtKcal(net) + ' / ' + fmtKcal(normKcal) + ' ккал';
+    } else {
+        document.getElementById('balance-progress').style.display = 'none';
+    }
+    document.getElementById('bal-net-sub').textContent = netSub || 'съедено − сожжено';
+}
+
+function plural(n, one, few, many) {
+    var n10 = n % 10, n100 = n % 100;
+    if (n10 === 1 && n100 !== 11) return one;
+    if (n10 >= 2 && n10 <= 4 && (n100 < 12 || n100 > 14)) return few;
+    return many;
+}
+
 /* ========== ИНИЦИАЛИЗАЦИЯ ========== */
 document.getElementById('weight-date').value = todayISO();
+document.getElementById('weight-date').max = todayISO();
 renderWeight();
 renderTodayButtons();
 renderCalendar();
 renderStats();
+renderBalance();
+
+/* Перерисовываем баланс при возврате на вкладку (вдруг пользователь добавил еду в другой вкладке) */
+document.addEventListener('visibilitychange', function() {
+    if (!document.hidden) renderBalance();
+});
 
 /* При изменении размера окна — перерисовать график */
 window.addEventListener('resize', function() {
@@ -573,7 +696,7 @@ var WATER_KEY = 'nutriplan_water_daily';
 var WATER_GOAL = 8;
 
 function getWaterData() {
-    var today = new Date().toISOString().slice(0, 10);
+    var today = todayISO();
     var data = {};
     try {
         var raw = localStorage.getItem(WATER_KEY);
@@ -651,13 +774,13 @@ function initGoalForecast() {
 
     /* Корректные подписи для набора (плюс) и похудения (минус) */
     if (goal === 'gain') {
-        document.getElementById('goal-pace1-desc').innerHTML = '+250 ккал/день<br>~0.25 кг/нед';
-        document.getElementById('goal-pace2-desc').innerHTML = '+500 ккал/день<br>~0.5 кг/нед';
-        document.getElementById('goal-pace3-desc').innerHTML = '+750 ккал/день<br>~0.75 кг/нед';
+        document.getElementById('goal-pace1-desc').innerHTML = '+250 ккал/день<br>+0.25 кг/нед';
+        document.getElementById('goal-pace2-desc').innerHTML = '+500 ккал/день<br>+0.5 кг/нед';
+        document.getElementById('goal-pace3-desc').innerHTML = '+750 ккал/день<br>+0.75 кг/нед';
     } else {
-        document.getElementById('goal-pace1-desc').innerHTML = '−250 ккал/день<br>~0.25 кг/нед';
-        document.getElementById('goal-pace2-desc').innerHTML = '−500 ккал/день<br>~0.5 кг/нед';
-        document.getElementById('goal-pace3-desc').innerHTML = '−750 ккал/день<br>~0.75 кг/нед';
+        document.getElementById('goal-pace1-desc').innerHTML = '−250 ккал/день<br>−0.25 кг/нед';
+        document.getElementById('goal-pace2-desc').innerHTML = '−500 ккал/день<br>−0.5 кг/нед';
+        document.getElementById('goal-pace3-desc').innerHTML = '−750 ккал/день<br>−0.75 кг/нед';
     }
 
     /* Целевой вес: если уже сохранён — используем, иначе разумный default */
@@ -863,11 +986,15 @@ function drawGoalChart(startWeight, targetWeight, weeks, paceKgWeek, goal) {
 
     ctx.fillStyle = '#3b2f2f';
     ctx.font = 'bold 12px Nunito, sans-serif';
+    /* Для набора: линия идёт вверх — "Старт" подписываем под точкой, "Цель" над.
+       Для похудения: линия идёт вниз — "Старт" над, "Цель" под. */
+    var startLabelY = goal === 'gain' ? y(startWeight) + 18 : y(startWeight) - 8;
+    var targetLabelY = goal === 'gain' ? y(targetWeight) - 8 : y(targetWeight) + 18;
     ctx.textAlign = 'left';
-    ctx.fillText('Старт ' + startWeight + 'кг', x(0) + 8, y(startWeight) - 8);
+    ctx.fillText('Старт ' + startWeight + 'кг', x(0) + 8, startLabelY);
     ctx.textAlign = 'right';
     ctx.fillStyle = primaryColor;
-    ctx.fillText('Цель ' + targetWeight + 'кг 🎯', x(weeks) - 8, y(targetWeight) - 8);
+    ctx.fillText('Цель ' + targetWeight + 'кг 🎯', x(weeks) - 8, targetLabelY);
 }
 
 function clearGoalChart() {
@@ -879,6 +1006,7 @@ function clearGoalChart() {
 
 initGoalForecast();
 </script>
+<script type="module" src="firebase-config.js"></script>
 <script src="common.js"></script>
 </body>
 </html>

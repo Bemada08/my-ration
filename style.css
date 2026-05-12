@@ -206,14 +206,14 @@ a{text-decoration:none;color:inherit}img{max-width:100%;display:block}
 #filter-breakfast:checked~.recipes__grid .cat-breakfast,#filter-lunch:checked~.recipes__grid .cat-lunch,#filter-dinner:checked~.recipes__grid .cat-dinner,#filter-snack:checked~.recipes__grid .cat-snack{display:block}
 
 .recipes__grid{display:grid;grid-template-columns:repeat(3,1fr);gap:28px}
-.recipe-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;transition:all var(--tr)}
+.recipe-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;transition:all var(--tr);display:flex;flex-direction:column}
 .recipe-card:hover{box-shadow:var(--shadow-hover);transform:translateY(-4px)}
-.recipe-card__img{width:100%;height:200px;background-size:cover;background-position:center;background-color:var(--primary-pale);position:relative}
+.recipe-card__img{width:100%;height:200px;background-size:cover;background-position:center;background-color:var(--primary-pale);position:relative;flex-shrink:0}
 .recipe-card__badge{position:absolute;top:12px;left:12px;background:var(--white);padding:4px 12px;border-radius:50px;font-size:.78rem;font-weight:600;color:var(--primary)}
-.recipe-card__body{padding:24px}
+.recipe-card__body{padding:24px;flex:1;display:flex;flex-direction:column}
 .recipe-card__title{font-family:var(--font-display);font-size:1.15rem;font-weight:600;color:var(--dark);margin-bottom:8px}
 .recipe-card__desc{color:var(--text-light);font-size:.88rem;line-height:1.55;margin-bottom:16px}
-.recipe-card__meta{display:flex;gap:16px;font-size:.82rem;color:var(--text-light)}
+.recipe-card__meta{display:flex;gap:16px;font-size:.82rem;color:var(--text-light);margin-top:auto}
 
 /* RECIPE DETAIL */
 .recipe-detail{padding:60px 0 100px}
@@ -1944,4 +1944,358 @@ a.sp-meal--link:hover .sp-meal__name { color:var(--primary); }
     .recipe-view-modal .modal__close, .rv-actions{display:none !important}
     .recipe-view-modal .modal{box-shadow:none !important;max-width:100% !important;max-height:none !important}
     body > *:not(.recipe-view-modal){display:none !important}
+}
+
+/* ============ КБЖУ-блок в модалке просмотра рецепта ============ */
+.rv-nutrition{
+    display:grid;grid-template-columns:repeat(4,1fr);gap:8px;
+    margin:0 0 18px;
+}
+.rv-nutri-item{
+    background:var(--cream);border-radius:10px;
+    padding:10px 6px;text-align:center;
+}
+.rv-nutri-val{font-size:1.1rem;font-weight:700;color:var(--dark)}
+.rv-nutri-lbl{font-size:.78rem;color:var(--text-light);margin-top:2px}
+@media (max-width:600px){
+    .rv-nutrition{grid-template-columns:repeat(2,1fr)}
+}
+
+/* ============================================================
+ * НОВЫЕ КАЛЬКУЛЯТОРЫ (вкладки: еда / активность / порция)
+ * ============================================================ */
+.calculator{padding:40px 0 80px}
+
+/* Табы */
+.calc-tabs{
+    display:flex;gap:8px;margin-bottom:24px;
+    background:var(--white);border:1px solid var(--border);border-radius:14px;
+    padding:6px;flex-wrap:wrap;
+}
+.calc-tab{
+    flex:1;min-width:180px;padding:12px 18px;border:none;background:transparent;
+    color:var(--text);font-size:.95rem;font-weight:600;cursor:pointer;
+    border-radius:10px;transition:all var(--tr);font-family:inherit;
+}
+.calc-tab:hover{background:var(--cream)}
+.calc-tab--active{background:var(--primary);color:#fff}
+.calc-tab--active:hover{background:var(--primary)}
+
+/* Панели */
+.calc-pane{display:none}
+.calc-pane--active{display:block}
+.calc-card{
+    background:var(--white);border:1px solid var(--border);border-radius:var(--radius-lg);
+    padding:32px;margin-bottom:24px;
+}
+.calc-card__title{font-family:var(--font-display);font-size:1.5rem;color:var(--dark);margin-bottom:6px}
+.calc-card__desc{color:var(--text-light);margin-bottom:24px;font-size:.95rem}
+
+/* ===== Анализатор еды ===== */
+.food-add{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap}
+.food-add__search{flex:2;min-width:260px;position:relative}
+.food-add__amount{flex:1;min-width:200px;display:flex;gap:8px}
+.food-add__amount .form-input{flex:1}
+.food-add__amount .btn{flex-shrink:0}
+
+.food-suggestions{
+    position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:50;
+    background:var(--white);border:1px solid var(--border);border-radius:10px;
+    box-shadow:var(--shadow-hover);max-height:320px;overflow-y:auto;display:none;
+}
+.food-sugg__item{
+    padding:10px 14px;cursor:pointer;display:flex;justify-content:space-between;
+    align-items:center;gap:12px;border-bottom:1px solid var(--cream);
+}
+.food-sugg__item:last-child{border-bottom:none}
+.food-sugg__item:hover,
+.food-sugg__item--active{background:var(--primary-pale)}
+.food-sugg__name{color:var(--dark);font-weight:500}
+.food-sugg__kcal{color:var(--text-light);font-size:.82rem;white-space:nowrap}
+.food-sugg__empty{padding:14px;color:var(--text-light);text-align:center;font-size:.9rem}
+
+.food-list{margin-bottom:20px}
+.food-list__empty{
+    text-align:center;color:var(--text-light);padding:32px 12px;
+    background:var(--primary-bg);border-radius:12px;font-style:italic;
+}
+.food-item{
+    display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:16px;
+    padding:14px 16px;background:var(--primary-bg);border-radius:10px;margin-bottom:8px;
+}
+.food-item__main{min-width:0}
+.food-item__name{color:var(--dark);font-weight:600;font-size:.95rem;margin-bottom:2px}
+.food-item__amount{color:var(--text-light);font-size:.82rem}
+.food-item__nutri{display:flex;gap:14px;font-size:.85rem;color:var(--text);flex-wrap:wrap}
+.food-item__nutri span{white-space:nowrap}
+.food-item__del{
+    background:transparent;border:none;cursor:pointer;font-size:1.1rem;
+    color:var(--text-light);padding:6px;border-radius:6px;transition:all var(--tr);
+}
+.food-item__del:hover{background:#fcdada;color:var(--warm-red)}
+
+.food-totals{background:var(--primary-pale);border-radius:14px;padding:24px;margin-top:24px}
+.food-totals__title{font-family:var(--font-display);font-size:1.15rem;color:var(--dark);margin-bottom:16px}
+.food-totals__grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.food-totals__item{background:var(--white);border-radius:10px;padding:14px 8px;text-align:center}
+.food-totals__val{font-size:1.4rem;font-weight:700;color:var(--primary);margin-bottom:2px}
+.food-totals__lbl{font-size:.8rem;color:var(--text-light)}
+
+.food-progress{margin-top:8px}
+.food-progress__hint{color:var(--text-light);font-size:.9rem;text-align:center;padding:8px}
+.food-progress__hint .link{color:var(--primary);font-weight:600}
+.food-progress__bars{display:flex;flex-direction:column;gap:12px}
+.food-progress__bar{}
+.food-progress__bar-head{display:flex;justify-content:space-between;font-size:.85rem;color:var(--text);margin-bottom:4px}
+.food-progress__track{height:10px;background:var(--white);border-radius:50px;overflow:hidden}
+.food-progress__fill{height:100%;border-radius:50px;transition:width .4s ease}
+.food-progress__fill--kcal {background:linear-gradient(90deg,#f5a05f,#b5651d)}
+.food-progress__fill--prot {background:linear-gradient(90deg,#7eb88f,#4a8c5c)}
+.food-progress__fill--fat  {background:linear-gradient(90deg,#f0d264,#d4a843)}
+.food-progress__fill--carbs{background:linear-gradient(90deg,#85b8d8,#4a8caa)}
+.food-progress__fill--over{background:linear-gradient(90deg,#e68a8a,#c1666b)!important}
+
+.food-actions{margin-top:18px;display:flex;justify-content:flex-end}
+
+/* ===== Активность ===== */
+.activity-grid{
+    display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));
+    gap:10px;
+}
+.activity-card{
+    display:flex;flex-direction:column;align-items:center;gap:6px;
+    padding:14px 8px;background:var(--white);border:2px solid var(--border);
+    border-radius:12px;cursor:pointer;transition:all var(--tr);font-family:inherit;
+}
+.activity-card:hover{border-color:var(--primary-light);transform:translateY(-2px)}
+.activity-card--active{border-color:var(--primary);background:var(--primary-pale)}
+.activity-card__icon{font-size:1.8rem}
+.activity-card__name{font-size:.82rem;color:var(--text);text-align:center;line-height:1.2}
+
+.activity-params-row{display:grid;grid-template-columns:1fr 2fr;gap:16px}
+@media (max-width:600px){.activity-params-row{grid-template-columns:1fr}}
+
+.activity-result{
+    background:var(--primary-pale);border-radius:14px;padding:24px;margin-top:20px;
+}
+.activity-result__head{display:flex;gap:16px;align-items:center;margin-bottom:12px}
+.activity-result__icon{font-size:3rem;line-height:1}
+.activity-result__val{font-family:var(--font-display);font-size:2rem;color:var(--primary);font-weight:700}
+.activity-result__sub{color:var(--text-light);font-size:.9rem;margin-top:2px}
+.activity-result__hint{color:var(--text);font-size:.92rem;line-height:1.5;background:var(--white);padding:12px 14px;border-radius:10px}
+
+.activity-history{
+    margin-top:24px;padding:20px;background:var(--cream);border-radius:14px;
+}
+.activity-history__title{font-family:var(--font-display);font-size:1.1rem;color:var(--dark);margin-bottom:12px}
+.activity-hist-item{
+    display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:14px;
+    padding:10px 14px;background:var(--white);border-radius:10px;margin-bottom:6px;
+}
+.activity-hist-item__icon{font-size:1.5rem}
+.activity-hist-item__info{font-size:.9rem;color:var(--dark)}
+.activity-hist-item__sub{font-size:.78rem;color:var(--text-light);margin-top:2px}
+.activity-hist-item__del{
+    background:transparent;border:none;cursor:pointer;color:var(--text-light);
+    font-size:1rem;padding:6px;border-radius:6px;
+}
+.activity-hist-item__del:hover{background:#fcdada;color:var(--warm-red)}
+.activity-history__total{margin-top:12px;text-align:right;color:var(--text);font-size:.95rem}
+.activity-history__total strong{color:var(--primary);font-size:1.1rem}
+
+/* ===== Размер порции ===== */
+.portion-search{position:relative;margin-bottom:20px}
+
+.portion-selected{
+    background:var(--primary-pale);border-radius:12px;padding:16px 20px;margin-bottom:20px;
+}
+.portion-selected__name{
+    font-family:var(--font-display);font-size:1.15rem;color:var(--dark);
+    font-weight:600;margin-bottom:8px;
+}
+.portion-selected__nutri{display:flex;flex-wrap:wrap;gap:14px;font-size:.9rem;color:var(--text)}
+.portion-selected__base{color:var(--text-light);font-size:.82rem;font-style:italic;margin-left:auto}
+
+.portion-input-row{display:flex;gap:8px;align-items:center;margin-top:12px}
+.portion-input-row .form-input{flex:1}
+.portion-input-unit{
+    padding:0 16px;color:var(--text-light);font-weight:600;font-size:.95rem;
+    background:var(--cream);border-radius:10px;height:48px;display:flex;align-items:center;
+}
+
+.portion-result{
+    background:linear-gradient(135deg,var(--primary-pale),var(--cream));
+    border-radius:14px;padding:24px;margin-top:20px;
+}
+.portion-result__main{text-align:center;margin-bottom:16px}
+.portion-result__val{
+    font-family:var(--font-display);font-size:3rem;color:var(--primary);
+    font-weight:700;line-height:1;
+}
+.portion-result__lbl{color:var(--text);font-size:1rem;margin-top:6px}
+.portion-result__hint{
+    background:var(--white);border-radius:10px;padding:12px 14px;
+    font-size:.9rem;color:var(--text);text-align:center;margin-bottom:16px;
+}
+.portion-result__hint:empty{display:none}
+.portion-result__macros{
+    display:grid;grid-template-columns:repeat(4,1fr);gap:8px;
+}
+.portion-macro{
+    background:var(--white);border-radius:10px;padding:10px 6px;text-align:center;
+}
+.portion-macro__val{display:block;font-weight:700;color:var(--dark);font-size:1rem}
+.portion-macro__lbl{display:block;font-size:.75rem;color:var(--text-light);margin-top:2px}
+@media (max-width:600px){.portion-result__macros{grid-template-columns:repeat(2,1fr)}}
+
+.portion-tips{margin-top:28px;background:var(--cream);border-radius:14px;padding:20px 24px}
+.portion-tips__title{font-family:var(--font-display);font-size:1.05rem;color:var(--dark);margin-bottom:12px}
+.portion-tips__list{list-style:none;padding:0;margin:0}
+.portion-tips__list li{padding:6px 0;color:var(--text);font-size:.92rem}
+.portion-tips__list strong{color:var(--primary)}
+
+/* Мобильная адаптация */
+@media (max-width:680px){
+    .food-totals__grid{grid-template-columns:repeat(2,1fr)}
+    .food-item{grid-template-columns:1fr auto;}
+    .food-item__nutri{grid-column:1 / -1;font-size:.8rem;gap:10px}
+}
+
+/* ============================================================
+ * БАЛАНС ЗА СЕГОДНЯ (в journal.html, связь с calculator.html)
+ * ============================================================ */
+.balance-block .link{color:var(--primary);font-weight:600}
+
+.balance-grid{
+    display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px;
+}
+.balance-item{
+    background:var(--primary-bg);border-radius:12px;padding:18px 14px;
+    text-align:center;border:2px solid transparent;transition:all var(--tr);
+}
+.balance-item--eaten {background:#fef3e7}
+.balance-item--burned{background:#e8f3eb}
+.balance-item--net   {background:var(--cream)}
+
+.balance-item__head{font-size:.82rem;color:var(--text-light);margin-bottom:6px}
+.balance-item__val{font-family:var(--font-display);font-size:1.7rem;color:var(--dark);font-weight:700;line-height:1.1}
+.balance-item__val span{font-size:.85rem;color:var(--text-light);font-weight:400;font-family:inherit}
+.balance-item__sub{font-size:.78rem;color:var(--text-light);margin-top:4px;min-height:1.2em}
+
+/* Раскраска баланса по сравнению с нормой */
+.balance-item--ok   {border-color:#7eb88f;background:#e8f3eb}
+.balance-item--ok    .balance-item__val{color:#4a8c5c}
+.balance-item--over {border-color:#e68a8a;background:#fceeee}
+.balance-item--over  .balance-item__val{color:#c1666b}
+.balance-item--under{border-color:#d4a843;background:#fcf6e6}
+.balance-item--under .balance-item__val{color:#a07f1f}
+
+.balance-progress{margin-bottom:14px}
+.balance-progress__head{display:flex;justify-content:space-between;font-size:.85rem;color:var(--text);margin-bottom:6px}
+.balance-progress__track{height:10px;background:var(--cream);border-radius:50px;overflow:hidden}
+.balance-progress__fill{
+    height:100%;border-radius:50px;
+    background:linear-gradient(90deg,#f5a05f,#b5651d);
+    transition:width .5s ease;
+}
+
+.balance-actions{display:flex;justify-content:flex-end}
+
+@media (max-width:600px){
+    .balance-grid{grid-template-columns:1fr;gap:8px}
+    .balance-item{padding:14px}
+    .balance-item__val{font-size:1.4rem}
+}
+
+/* ============ Страница входа/регистрации ============ */
+.auth-section{
+    min-height:calc(100vh - 80px);
+    display:flex;align-items:center;justify-content:center;
+    padding:60px 0;
+    background:linear-gradient(135deg, var(--cream), var(--primary-bg));
+}
+.auth-card{
+    max-width:440px;margin:0 auto;
+    background:var(--white);
+    border-radius:var(--radius-lg);
+    box-shadow:var(--shadow);
+    overflow:hidden;
+}
+.auth-tabs{
+    display:grid;grid-template-columns:1fr 1fr;
+    border-bottom:1px solid var(--border);
+}
+.auth-tab{
+    padding:18px;background:transparent;border:none;
+    font-family:var(--font-body);font-size:1rem;font-weight:600;
+    color:var(--text-light);cursor:pointer;
+    transition:all var(--tr);
+    border-bottom:3px solid transparent;
+}
+.auth-tab--active{
+    color:var(--primary);border-bottom-color:var(--primary);
+}
+.auth-tab:hover:not(.auth-tab--active){
+    color:var(--text);background:var(--bg);
+}
+.auth-form{display:none;padding:32px 28px}
+.auth-form--active{display:block}
+.auth-form__title{
+    font-family:var(--font-display);font-size:1.6rem;
+    color:var(--dark);margin:0 0 8px;text-align:center;
+}
+.auth-form__desc{
+    color:var(--text-light);font-size:.9rem;
+    text-align:center;margin:0 0 24px;line-height:1.5;
+}
+.auth-input{
+    width:100%;padding:12px 16px;
+    border:1px solid var(--border);border-radius:10px;
+    font-family:var(--font-body);font-size:1rem;
+    background:var(--white);color:var(--text);
+    margin-bottom:12px;
+    transition:border-color var(--tr);
+    box-sizing:border-box;
+}
+.auth-input:focus{outline:none;border-color:var(--primary)}
+.auth-submit{width:100%;margin-top:8px}
+.auth-error{
+    color:var(--warm-red);font-size:.88rem;
+    text-align:center;margin-top:12px;
+    min-height:20px;
+    line-height:1.4;
+}
+.auth-forgot{
+    display:block;text-align:center;
+    margin-top:14px;font-size:.85rem;
+    color:var(--primary);text-decoration:none;
+    transition:color var(--tr);
+}
+.auth-forgot:hover{color:var(--primary-light);text-decoration:underline}
+
+@media (max-width:480px){
+    .auth-form{padding:24px 18px}
+    .auth-form__title{font-size:1.35rem}
+}
+
+/* Метка облачного рецепта */
+.recipe-card[data-cloud="1"]::before {
+    content: '☁️';
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    z-index: 2;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+.recipe-card {
+    position: relative; /* нужно для абсолютного позиционирования метки */
 }

@@ -3,452 +3,700 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Калькулятор калорий — МойРацион</title>
+    <title>Калькуляторы — МойРацион</title>
     <link rel="stylesheet" href="style.css">
-<link rel="icon" type="image/png" href="favicon.png">
+    <link rel="icon" type="image/png" href="favicon.png">
 </head>
 <body>
-<header class="header"><div class="container header__inner"><a href="index.html" class="logo"><span class="logo__icon">🍳</span><span class="logo__text">МойРацион</span></a><nav class="nav"><a href="index.html" class="nav__link">Главная</a><a href="planner.html" class="nav__link">Планировщик</a><a href="recipes.html" class="nav__link">Рецепты</a><a href="journal.html" class="nav__link">Дневник</a><a href="calculator.html" class="nav__link nav__link--active">Калькулятор</a></nav></div></header>
+<header class="header"><div class="container header__inner"><a href="index.html" class="logo"><span class="logo__icon">🍳</span><span class="logo__text">МойРацион</span></a><nav class="nav"><a href="index.html" class="nav__link">Главная</a><a href="planner.html" class="nav__link">Планировщик</a><a href="recipes.html" class="nav__link">Рецепты</a><a href="journal.html" class="nav__link">Дневник</a><a href="calculator.html" class="nav__link nav__link--active">Калькуляторы</a></nav></div></header>
 
-<section class="page-header"><div class="container"><h1 class="page-header__title">Калькулятор калорий</h1><p class="page-header__desc">Рассчитайте суточную норму и индекс массы тела</p></div></section>
+<section class="page-header"><div class="container"><h1 class="page-header__title">Калькуляторы питания</h1><p class="page-header__desc">Анализируйте еду, тренировки и подбирайте размер порции</p></div></section>
 
-<section class="calculator"><div class="container"><div class="calculator__inner">
-<div class="calc-card">
-    <h2 class="calc-card__title">Ваши параметры</h2>
-    <p class="calc-card__desc">Заполните данные и нажмите «Рассчитать»</p>
+<section class="calculator">
+<div class="container">
 
-    <div class="form-grid">
-        <!-- Пол -->
-        <div class="form-group form-group--full">
-            <label class="form-label">Пол</label>
+    <div class="calc-tabs" role="tablist">
+        <button class="calc-tab calc-tab--active" data-tab="food"     onclick="switchTab('food')">🥗 Анализатор еды</button>
+        <button class="calc-tab"                   data-tab="activity" onclick="switchTab('activity')">🏃 Активность</button>
+        <button class="calc-tab"                   data-tab="portion"  onclick="switchTab('portion')">📐 Размер порции</button>
+    </div>
+
+    <!-- ВКЛАДКА 1: АНАЛИЗАТОР ЕДЫ -->
+    <div class="calc-pane calc-pane--active" id="pane-food">
+    <div class="calc-card">
+        <h2 class="calc-card__title">Что вы съели сегодня?</h2>
+        <p class="calc-card__desc">Добавьте продукты и узнайте суммарную калорийность и КБЖУ</p>
+
+        <div class="food-add">
+            <div class="food-add__search">
+                <input type="text" class="form-input" id="food-search" placeholder="🔍 Найти продукт (например: овсянка, банан, курица)" autocomplete="off">
+                <div class="food-suggestions" id="food-suggestions"></div>
+            </div>
+            <div class="food-add__amount">
+                <input type="number" class="form-input" id="food-grams" placeholder="Граммы" min="1" max="2000">
+                <button class="btn btn--primary" id="food-add-btn" onclick="addFood()" disabled>Добавить</button>
+            </div>
+        </div>
+
+        <div class="food-list" id="food-list">
+            <p class="food-list__empty">Список пуст — добавьте первый продукт</p>
+        </div>
+
+        <div class="food-totals" id="food-totals" style="display:none">
+            <h3 class="food-totals__title">Итого за день</h3>
+            <div class="food-totals__grid">
+                <div class="food-totals__item">
+                    <div class="food-totals__val" id="total-kcal">0</div>
+                    <div class="food-totals__lbl">ккал</div>
+                </div>
+                <div class="food-totals__item">
+                    <div class="food-totals__val" id="total-prot">0 г</div>
+                    <div class="food-totals__lbl">Белки</div>
+                </div>
+                <div class="food-totals__item">
+                    <div class="food-totals__val" id="total-fat">0 г</div>
+                    <div class="food-totals__lbl">Жиры</div>
+                </div>
+                <div class="food-totals__item">
+                    <div class="food-totals__val" id="total-carbs">0 г</div>
+                    <div class="food-totals__lbl">Углеводы</div>
+                </div>
+            </div>
+
+            <div class="food-progress" id="food-progress">
+                <p class="food-progress__hint" id="food-progress-hint">Установите дневную норму, чтобы видеть прогресс</p>
+                <div class="food-progress__bars" id="food-progress-bars" style="display:none">
+                    <div class="food-progress__bar">
+                        <div class="food-progress__bar-head"><span>Калории</span><span id="prog-kcal-text">0 / 2000</span></div>
+                        <div class="food-progress__track"><div class="food-progress__fill food-progress__fill--kcal" id="prog-kcal"></div></div>
+                    </div>
+                    <div class="food-progress__bar">
+                        <div class="food-progress__bar-head"><span>Белки</span><span id="prog-prot-text">0 / 120</span></div>
+                        <div class="food-progress__track"><div class="food-progress__fill food-progress__fill--prot" id="prog-prot"></div></div>
+                    </div>
+                    <div class="food-progress__bar">
+                        <div class="food-progress__bar-head"><span>Жиры</span><span id="prog-fat-text">0 / 60</span></div>
+                        <div class="food-progress__track"><div class="food-progress__fill food-progress__fill--fat" id="prog-fat"></div></div>
+                    </div>
+                    <div class="food-progress__bar">
+                        <div class="food-progress__bar-head"><span>Углеводы</span><span id="prog-carbs-text">0 / 200</span></div>
+                        <div class="food-progress__track"><div class="food-progress__fill food-progress__fill--carbs" id="prog-carbs"></div></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="food-actions">
+                <button class="btn btn--outline" onclick="clearFoodList()">🗑 Очистить список</button>
+            </div>
+        </div>
+    </div>
+    </div>
+
+    <!-- ВКЛАДКА 2: АКТИВНОСТЬ -->
+    <div class="calc-pane" id="pane-activity">
+    <div class="calc-card">
+        <h2 class="calc-card__title">Расчёт сожжённых калорий</h2>
+        <p class="calc-card__desc">Выберите вид активности — узнайте сколько потратили</p>
+
+        <div class="form-group">
+            <label class="form-label">Ваш вес (кг)</label>
+            <input type="number" class="form-input" id="act-weight" min="30" max="300" step="0.1" placeholder="70">
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Вид активности</label>
+            <div class="activity-grid" id="activity-grid"></div>
+        </div>
+
+        <div class="form-group" id="activity-params" style="display:none">
+            <div class="activity-params-row">
+                <div>
+                    <label class="form-label">Время (минут)</label>
+                    <input type="number" class="form-input" id="act-time" min="1" max="600" placeholder="30">
+                </div>
+                <div>
+                    <label class="form-label">Интенсивность</label>
+                    <div class="radio-group radio-group--3">
+                        <span class="radio-tab" id="int-low" onclick="setIntensity('low')">Низкая</span>
+                        <span class="radio-tab radio-tab--active" id="int-mid" onclick="setIntensity('mid')">Средняя</span>
+                        <span class="radio-tab" id="int-high" onclick="setIntensity('high')">Высокая</span>
+                    </div>
+                </div>
+            </div>
+            <button class="btn btn--primary" onclick="calcActivity()" style="width:100%;margin-top:16px">Рассчитать</button>
+        </div>
+
+        <div class="activity-result" id="activity-result" style="display:none">
+            <div class="activity-result__head">
+                <span class="activity-result__icon" id="act-res-icon">🔥</span>
+                <div>
+                    <div class="activity-result__val"><span id="act-res-kcal">0</span> ккал</div>
+                    <div class="activity-result__sub" id="act-res-sub"></div>
+                </div>
+            </div>
+            <p class="activity-result__hint" id="act-res-hint"></p>
+            <button class="btn btn--outline" onclick="addToHistory()" style="margin-top:12px">＋ Добавить в историю</button>
+        </div>
+
+        <div class="activity-history" id="activity-history" style="display:none">
+            <h3 class="activity-history__title">История за сегодня</h3>
+            <div id="activity-history-list"></div>
+            <p class="activity-history__total">Всего сожжено: <strong id="act-total">0 ккал</strong></p>
+        </div>
+    </div>
+    </div>
+
+    <!-- ВКЛАДКА 3: РАЗМЕР ПОРЦИИ -->
+    <div class="calc-pane" id="pane-portion">
+    <div class="calc-card">
+        <h2 class="calc-card__title">Подбор размера порции</h2>
+        <p class="calc-card__desc">Узнайте сколько грамм нужно съесть, чтобы получить нужные калории или белок</p>
+
+        <div class="portion-search">
+            <input type="text" class="form-input" id="portion-search" placeholder="🔍 Найти продукт" autocomplete="off">
+            <div class="food-suggestions" id="portion-suggestions"></div>
+        </div>
+
+        <div class="portion-selected" id="portion-selected" style="display:none">
+            <div class="portion-selected__name" id="portion-product-name"></div>
+            <div class="portion-selected__nutri" id="portion-product-nutri"></div>
+        </div>
+
+        <div class="form-group form-group--full" id="portion-target-block" style="display:none">
+            <label class="form-label">Цель</label>
             <div class="radio-group">
-                <span class="radio-tab radio-tab--active" id="gender-male" onclick="selectGender('male')">Мужской</span>
-                <span class="radio-tab" id="gender-female" onclick="selectGender('female')">Женский</span>
+                <span class="radio-tab radio-tab--active" id="ptg-kcal" onclick="setPortionTarget('kcal')">🔥 По калориям</span>
+                <span class="radio-tab" id="ptg-prot" onclick="setPortionTarget('prot')">🥩 По белку</span>
             </div>
-        </div>
-
-        <!-- Возраст, Вес, Рост -->
-        <div class="form-group">
-            <label class="form-label">Возраст</label>
-            <input type="number" class="form-input" id="age" min="14" max="100">
-        </div>
-        <div class="form-group">
-            <label class="form-label">Вес (кг)</label>
-            <input type="number" class="form-input" id="weight" min="30" max="300">
-        </div>
-        <div class="form-group">
-            <label class="form-label">Рост (см)</label>
-            <input type="number" class="form-input" id="height" min="100" max="250">
-        </div>
-
-        <!-- Активность -->
-        <div class="form-group">
-            <label class="form-label">Уровень активности</label>
-            <select class="form-select" id="activity">
-                <option value="" selected disabled>Выберите уровень</option>
-                <option value="1.2">Минимальная (сидячий)</option>
-                <option value="1.375">Лёгкая (1-3 раза/нед)</option>
-                <option value="1.55">Средняя (3-5 раз/нед)</option>
-                <option value="1.725">Высокая (6-7 раз/нед)</option>
-                <option value="1.9">Очень высокая (2 раза/день)</option>
-            </select>
-        </div>
-
-        <!-- Цель -->
-        <div class="form-group form-group--full">
-            <label class="form-label">Ваша цель</label>
-            <div class="radio-group radio-group--3">
-                <span class="radio-tab radio-tab--active" id="goal-lose" onclick="selectGoal('lose')">📉 Похудение</span>
-                <span class="radio-tab" id="goal-maintain" onclick="selectGoal('maintain')">⚖️ Поддержание</span>
-                <span class="radio-tab" id="goal-gain" onclick="selectGoal('gain')">💪 Набор массы</span>
+            <div class="portion-input-row">
+                <input type="number" class="form-input" id="portion-value" min="1" max="3000" placeholder="200">
+                <span class="portion-input-unit" id="portion-unit">ккал</span>
             </div>
+            <button class="btn btn--primary" onclick="calcPortion()" style="width:100%;margin-top:12px">Рассчитать порцию</button>
         </div>
 
-        <!-- Кнопка -->
-        <div class="form-group form-group--full">
-            <button class="btn btn--primary" onclick="calculate()" style="width:100%;text-align:center;cursor:pointer">Рассчитать</button>
+        <div class="portion-result" id="portion-result" style="display:none">
+            <div class="portion-result__main">
+                <div class="portion-result__val"><span id="portion-grams">0</span> г</div>
+                <div class="portion-result__lbl" id="portion-product-result">продукта</div>
+            </div>
+            <div class="portion-result__hint" id="portion-hint"></div>
+            <div class="portion-result__macros" id="portion-result-macros"></div>
+        </div>
+
+        <div class="portion-tips">
+            <h3 class="portion-tips__title">📏 Визуальные меры на глаз</h3>
+            <ul class="portion-tips__list">
+                <li><strong>Ладонь</strong> без пальцев — порция мяса/рыбы ≈ 100 г</li>
+                <li><strong>Кулак</strong> — порция гарнира или варёных овощей ≈ 200 г</li>
+                <li><strong>Горсть</strong> — порция орехов ≈ 30 г</li>
+                <li><strong>Большой палец</strong> — порция сыра/масла ≈ 15 г</li>
+                <li><strong>1 чайная ложка</strong> ≈ 5 мл, <strong>1 столовая</strong> ≈ 15 мл</li>
+                <li><strong>1 стакан</strong> ≈ 200–250 мл (вода, молоко, кефир)</li>
+            </ul>
         </div>
     </div>
-
-    <!-- Результат — скрыт до нажатия -->
-    <div id="result" style="display:none">
-
-        <!-- Суточная норма -->
-        <div class="calc-result">
-            <p class="calc-result__label" id="result-goal-label">Ваша суточная норма</p>
-            <div class="calc-result__value" id="result-value">—</div>
-            <p class="calc-result__unit">килокалорий в день</p>
-            <p class="calc-result__hint" id="result-hint"></p>
-        </div>
-
-        <!-- ИМТ -->
-        <div class="calc-bmi">
-            <h3 class="calc-bmi__title">Индекс массы тела (ИМТ)</h3>
-            <div class="calc-bmi__row">
-                <div class="calc-bmi__value" id="bmi-value">—</div>
-                <div class="calc-bmi__status" id="bmi-status">—</div>
-            </div>
-            <div class="calc-bmi__bar">
-                <div class="calc-bmi__bar-fill" id="bmi-bar"></div>
-                <div class="calc-bmi__pointer" id="bmi-pointer"></div>
-            </div>
-            <div class="calc-bmi__legend">
-                <span class="calc-bmi__leg calc-bmi__leg--under">до 18.5 — дефицит</span>
-                <span class="calc-bmi__leg calc-bmi__leg--normal">18.5–24.9 — норма</span>
-                <span class="calc-bmi__leg calc-bmi__leg--over">25–29.9 — избыток</span>
-                <span class="calc-bmi__leg calc-bmi__leg--obese">30+ — ожирение</span>
-            </div>
-        </div>
-
-        <!-- Возрастные особенности метаболизма -->
-        <div class="age-info" id="age-info" style="display:none">
-            <div class="age-info__head">
-                <span class="age-info__icon" id="ai-icon">⚡</span>
-                <h3 class="age-info__title" id="ai-title">Особенности вашего возраста</h3>
-            </div>
-            <p class="age-info__desc" id="ai-desc"></p>
-            <div class="age-info__metric">
-                <div class="age-info__bar">
-                    <div class="age-info__fill" id="ai-fill"></div>
-                </div>
-                <div class="age-info__legend">
-                    <span>Замедленный</span>
-                    <span>Средний</span>
-                    <span>Активный</span>
-                </div>
-            </div>
-            <div class="age-info__tips" id="ai-tips"></div>
-        </div>
-
-        <!-- Предупреждения о здоровье -->
-        <div class="health-alert" id="health-alert" style="display:none">
-            <div class="health-alert__icon" id="ha-icon"></div>
-            <h3 class="health-alert__title" id="ha-title"></h3>
-            <p class="health-alert__desc" id="ha-desc"></p>
-            <div class="health-alert__risks">
-                <h4>Возможные риски для здоровья:</h4>
-                <ul id="ha-risks"></ul>
-            </div>
-            <div class="health-alert__tips">
-                <h4>Рекомендации по питанию:</h4>
-                <ul id="ha-tips"></ul>
-            </div>
-        </div>
-
-        <!-- БЖУ -->
-        <div class="calc-bju">
-            <h3 class="calc-bju__title">Суточная норма БЖУ</h3>
-            <div class="calc-bju__grid">
-                <div class="calc-bju__item calc-bju__item--protein">
-                    <div class="calc-bju__icon">🥩</div>
-                    <div class="calc-bju__val" id="bju-protein">—</div>
-                    <div class="calc-bju__label">Белки</div>
-                    <div class="calc-bju__pct">30%</div>
-                    <div class="calc-bju__bar"><div class="calc-bju__bar-fill calc-bju__bar-fill--protein" style="width:30%"></div></div>
-                </div>
-                <div class="calc-bju__item calc-bju__item--fat">
-                    <div class="calc-bju__icon">🥑</div>
-                    <div class="calc-bju__val" id="bju-fat">—</div>
-                    <div class="calc-bju__label">Жиры</div>
-                    <div class="calc-bju__pct">30%</div>
-                    <div class="calc-bju__bar"><div class="calc-bju__bar-fill calc-bju__bar-fill--fat" style="width:30%"></div></div>
-                </div>
-                <div class="calc-bju__item calc-bju__item--carbs">
-                    <div class="calc-bju__icon">🍞</div>
-                    <div class="calc-bju__val" id="bju-carbs">—</div>
-                    <div class="calc-bju__label">Углеводы</div>
-                    <div class="calc-bju__pct">40%</div>
-                    <div class="calc-bju__bar"><div class="calc-bju__bar-fill calc-bju__bar-fill--carbs" style="width:40%"></div></div>
-                </div>
-            </div>
-            <p class="calc-bju__note">Распределение: 30% белки / 30% жиры / 40% углеводы</p>
-        </div>
-
     </div>
+
 </div>
+</section>
 
-<!-- Рекомендации -->
-<div class="calc-tips"><h3 class="calc-tips__title">Рекомендации по питанию</h3>
-<div class="tip-card"><div class="tip-card__icon">💧</div><div class="tip-card__text"><strong>Водный баланс</strong><p>Пейте не менее 1.5–2 литров воды в день.</p></div></div>
-<div class="tip-card"><div class="tip-card__icon">🥦</div><div class="tip-card__text"><strong>Баланс БЖУ</strong><p>30% белки, 30% жиры, 40% углеводы.</p></div></div>
-<div class="tip-card"><div class="tip-card__icon">🕐</div><div class="tip-card__text"><strong>Режим питания</strong><p>4–5 раз в день небольшими порциями.</p></div></div>
-<div class="tip-card"><div class="tip-card__icon">📉</div><div class="tip-card__text"><strong>Безопасное похудение</strong><p>Дефицит 300–500 ккал. Не ниже 1200 ккал (ж) / 1500 ккал (м).</p></div></div>
-</div>
+<footer class="footer"><div class="container footer__inner"><div class="footer__brand"><a href="index.html" class="logo"><span class="logo__icon">🍳</span><span class="logo__text">МойРацион</span></a><p class="footer__desc">Сервис для планирования здорового рациона питания. Дипломный проект, 2026.</p></div><div class="footer__links"><h4 class="footer__heading">Навигация</h4><a href="index.html" class="footer__link">Главная</a><a href="planner.html" class="footer__link">Планировщик</a><a href="recipes.html" class="footer__link">Рецепты</a><a href="journal.html" class="footer__link">Дневник</a><a href="calculator.html" class="footer__link">Калькуляторы</a></div><div class="footer__links"><h4 class="footer__heading">Информация</h4><a href="#" class="footer__link">О проекте</a><a href="#" class="footer__link">Контакты</a></div></div><div class="container"><div class="footer__bottom"><p>© 2026 МойРацион. Все права защищены.</p></div></div></footer>
 
-<!-- Формула -->
-<div class="formula-block"><h3 class="formula-block__title">Формулы расчёта</h3><div class="formula-block__text">
-<p><strong>Калории (Миффлин — Сан Жеора):</strong></p>
-<span class="formula-block__formula">Мужчины: BMR = 10 × вес + 6.25 × рост − 5 × возраст − 5</span>
-<span class="formula-block__formula">Женщины: BMR = 10 × вес + 6.25 × рост − 5 × возраст − 161</span>
-<p>BMR × коэффициент активности (1.2–1.9) = суточная норма (TDEE).</p>
-<p style="margin-top:16px"><strong>Индекс массы тела:</strong></p>
-<span class="formula-block__formula">ИМТ = вес (кг) ÷ рост (м)²</span>
-</div></div>
-
-</div></div></section>
-
-<footer class="footer"><div class="container footer__inner"><div class="footer__brand"><a href="index.html" class="logo"><span class="logo__icon">🍳</span><span class="logo__text">МойРацион</span></a><p class="footer__desc">Сервис для планирования здорового рациона питания. Дипломный проект, 2026.</p></div><div class="footer__links"><h4 class="footer__heading">Навигация</h4><a href="index.html" class="footer__link">Главная</a><a href="planner.html" class="footer__link">Планировщик</a><a href="recipes.html" class="footer__link">Рецепты</a><a href="journal.html" class="footer__link">Дневник</a><a href="calculator.html" class="footer__link">Калькулятор</a></div><div class="footer__links"><h4 class="footer__heading">Информация</h4><a href="#" class="footer__link">О проекте</a><a href="#" class="footer__link">Контакты</a></div></div><div class="container"><div class="footer__bottom"><p>© 2026 МойРацион. Все права защищены.</p></div></div></footer>
-
+<script src="food-data.js"></script>
 <script>
-    var gender = 'male';
-    var goal = 'lose';
+var ACTIVE_TAB_KEY = 'nutriplan_calc_tab';
 
-    /* Переключение пола */
-    function selectGender(g) {
-        gender = g;
-        document.getElementById('gender-male').className = (g === 'male') ? 'radio-tab radio-tab--active' : 'radio-tab';
-        document.getElementById('gender-female').className = (g === 'female') ? 'radio-tab radio-tab--active' : 'radio-tab';
+function switchTab(tab) {
+    document.querySelectorAll('.calc-tab').forEach(function(b) {
+        b.classList.toggle('calc-tab--active', b.dataset.tab === tab);
+    });
+    document.querySelectorAll('.calc-pane').forEach(function(p) {
+        p.classList.toggle('calc-pane--active', p.id === 'pane-' + tab);
+    });
+    try { localStorage.setItem(ACTIVE_TAB_KEY, tab); } catch(e) {}
+}
+
+function fmt(n) { return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' '); }
+function fmt1(n) { return (Math.round(n * 10) / 10).toString().replace('.', ','); }
+/* Умное форматирование: маленькие числа с десятыми, большие — целые */
+function fmtSmart(n) {
+    if (n === 0) return '0';
+    if (Math.abs(n) < 10) return fmt1(n);
+    return fmt(n);
+}
+function todayLocal() {
+    var d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
+/* ==================== АНАЛИЗАТОР ЕДЫ ==================== */
+var foodList = [];
+var selectedFood = null;
+var FOOD_LIST_KEY = 'nutriplan_food_today';
+
+/* Подсветка совпадений + хранение текущих результатов для клавиатурной навигации */
+var searchState = {}; /* { inputId: { matches: [], highlighted: -1, boxId, onPick } } */
+
+function searchFood(query, suggBoxId, onPick, inputId) {
+    var box = document.getElementById(suggBoxId);
+    var q = query.trim().toLowerCase();
+    if (!q) {
+        box.innerHTML = ''; box.style.display = 'none';
+        searchState[inputId] = null;
+        return;
     }
 
-    /* Переключение цели */
-    function selectGoal(g) {
-        goal = g;
-        document.getElementById('goal-lose').className = (g === 'lose') ? 'radio-tab radio-tab--active' : 'radio-tab';
-        document.getElementById('goal-maintain').className = (g === 'maintain') ? 'radio-tab radio-tab--active' : 'radio-tab';
-        document.getElementById('goal-gain').className = (g === 'gain') ? 'radio-tab radio-tab--active' : 'radio-tab';
+    var words = q.split(/\s+/).filter(Boolean);
+    var matches = window.FOOD_DB.filter(function(p) {
+        var name = p.name.toLowerCase();
+        return words.every(function(w) { return name.indexOf(w) !== -1; });
+    }).slice(0, 8);
+
+    searchState[inputId] = { matches: matches, highlighted: -1, boxId: suggBoxId, onPick: onPick };
+
+    if (matches.length === 0) {
+        box.innerHTML = '<div class="food-sugg__empty">Ничего не найдено</div>';
+    } else {
+        box.innerHTML = matches.map(function(p, i) {
+            return '<div class="food-sugg__item" data-idx="' + i + '">' +
+                '<span class="food-sugg__name">' + p.name + '</span>' +
+                '<span class="food-sugg__kcal">' + p.kcal + ' ккал / 100 г</span>' +
+            '</div>';
+        }).join('');
+        Array.from(box.querySelectorAll('.food-sugg__item')).forEach(function(el, i) {
+            el.onmouseenter = function() { setHighlighted(inputId, i); };
+            el.onclick = function() { pickHighlighted(inputId, i); };
+        });
+    }
+    box.style.display = 'block';
+}
+
+function setHighlighted(inputId, idx) {
+    var st = searchState[inputId];
+    if (!st) return;
+    var box = document.getElementById(st.boxId);
+    var items = box.querySelectorAll('.food-sugg__item');
+    items.forEach(function(el, i) {
+        el.classList.toggle('food-sugg__item--active', i === idx);
+    });
+    st.highlighted = idx;
+    if (idx >= 0 && items[idx]) items[idx].scrollIntoView({ block: 'nearest' });
+}
+
+function pickHighlighted(inputId, idx) {
+    var st = searchState[inputId];
+    if (!st || !st.matches[idx]) return;
+    var product = st.matches[idx];
+    st.onPick(product);
+    document.getElementById(st.boxId).innerHTML = '';
+    document.getElementById(st.boxId).style.display = 'none';
+    searchState[inputId] = null;
+}
+
+/* Универсальный обработчик клавиатуры для полей поиска */
+function attachSearchKeyboard(inputId) {
+    var input = document.getElementById(inputId);
+    input.addEventListener('keydown', function(e) {
+        var st = searchState[inputId];
+        if (!st || !st.matches || st.matches.length === 0) return;
+
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            var next = st.highlighted < st.matches.length - 1 ? st.highlighted + 1 : 0;
+            setHighlighted(inputId, next);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            var prev = st.highlighted > 0 ? st.highlighted - 1 : st.matches.length - 1;
+            setHighlighted(inputId, prev);
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            var idx = st.highlighted >= 0 ? st.highlighted : 0;
+            pickHighlighted(inputId, idx);
+        } else if (e.key === 'Escape') {
+            e.preventDefault();
+            document.getElementById(st.boxId).style.display = 'none';
+            searchState[inputId] = null;
+        }
+    });
+}
+
+document.getElementById('food-search').addEventListener('input', function(e) {
+    selectedFood = null;
+    document.getElementById('food-add-btn').disabled = true;
+    searchFood(e.target.value, 'food-suggestions', function(product) {
+        selectedFood = product;
+        document.getElementById('food-search').value = product.name;
+        document.getElementById('food-add-btn').disabled = false;
+        document.getElementById('food-grams').focus();
+    }, 'food-search');
+});
+attachSearchKeyboard('food-search');
+
+/* Enter в поле грамм — добавить */
+document.getElementById('food-grams').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && !document.getElementById('food-add-btn').disabled) {
+        e.preventDefault();
+        addFood();
+    }
+});
+
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.food-add__search')) document.getElementById('food-suggestions').style.display = 'none';
+    if (!e.target.closest('.portion-search'))   document.getElementById('portion-suggestions').style.display = 'none';
+});
+
+function addFood() {
+    if (!selectedFood) { alert('Сначала выберите продукт из списка'); return; }
+    var grams = parseFloat(document.getElementById('food-grams').value);
+    if (!grams || grams <= 0 || grams > 2000) { alert('Введите граммы (1–2000)'); return; }
+
+    var k = grams / 100;
+    /* Если такой продукт уже в списке — суммируем граммы (Н1) */
+    var existing = foodList.find(function(item) { return item.name === selectedFood.name; });
+    if (existing) {
+        existing.grams += grams;
+        existing.kcal  += selectedFood.kcal * k;
+        existing.p     += selectedFood.p * k;
+        existing.f     += selectedFood.f * k;
+        existing.c     += selectedFood.c * k;
+    } else {
+        foodList.push({
+            name: selectedFood.name, grams: grams,
+            kcal: selectedFood.kcal * k, p: selectedFood.p * k, f: selectedFood.f * k, c: selectedFood.c * k
+        });
     }
 
-    /* Форматирование числа (2430 → "2 430") */
-    function fmt(n) {
-        return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+    selectedFood = null;
+    document.getElementById('food-search').value = '';
+    document.getElementById('food-grams').value = '';
+    document.getElementById('food-add-btn').disabled = true;
+    document.getElementById('food-search').focus();
+    saveFoodList();
+    renderFoodList();
+}
+
+function removeFood(idx) {
+    foodList.splice(idx, 1);
+    saveFoodList();
+    renderFoodList();
+}
+
+function clearFoodList() {
+    if (foodList.length === 0) return;
+    if (!confirm('Очистить весь список?')) return;
+    foodList = [];
+    saveFoodList();
+    renderFoodList();
+}
+
+function renderFoodList() {
+    var list = document.getElementById('food-list');
+    var totalsBlock = document.getElementById('food-totals');
+    if (foodList.length === 0) {
+        list.innerHTML = '<p class="food-list__empty">Список пуст — добавьте первый продукт</p>';
+        totalsBlock.style.display = 'none';
+        return;
     }
 
-    /* Расчёт */
-    function calculate() {
-        var age      = parseInt(document.getElementById('age').value);
-        var weight   = parseFloat(document.getElementById('weight').value);
-        var height   = parseFloat(document.getElementById('height').value);
-        var activity = parseFloat(document.getElementById('activity').value);
+    list.innerHTML = foodList.map(function(item, i) {
+        return '<div class="food-item">' +
+            '<div class="food-item__main">' +
+                '<div class="food-item__name">' + item.name + '</div>' +
+                '<div class="food-item__amount">' + fmtSmart(item.grams) + ' г</div>' +
+            '</div>' +
+            '<div class="food-item__nutri">' +
+                '<span>🔥 ' + fmtSmart(item.kcal) + '</span>' +
+                '<span>Б ' + fmt1(item.p) + '</span>' +
+                '<span>Ж ' + fmt1(item.f) + '</span>' +
+                '<span>У ' + fmt1(item.c) + '</span>' +
+            '</div>' +
+            '<button class="food-item__del" onclick="removeFood(' + i + ')" aria-label="Удалить">✕</button>' +
+        '</div>';
+    }).join('');
 
-        if (!age || !weight || !height || age < 14 || age > 100 || weight < 30 || height < 100) {
-            alert('Пожалуйста, заполните все поля корректными данными.');
-            return;
-        }
-        if (!activity) {
-            alert('Пожалуйста, выберите уровень активности.');
-            return;
-        }
+    var tot = foodList.reduce(function(s, x) {
+        s.kcal += x.kcal; s.p += x.p; s.f += x.f; s.c += x.c; return s;
+    }, { kcal:0, p:0, f:0, c:0 });
 
-        /* === Используем общую формулу из common.js === */
-        var r = nutriCalc(gender, age, height, weight, activity, goal);
-        var bmr = r.bmr;
-        var tdee = r.maintain;
-        var kcal = r.kcal;
+    document.getElementById('total-kcal').textContent = fmt(tot.kcal);
+    document.getElementById('total-prot').textContent = fmt1(tot.p) + ' г';
+    document.getElementById('total-fat').textContent  = fmt1(tot.f) + ' г';
+    document.getElementById('total-carbs').textContent = fmt1(tot.c) + ' г';
 
-        /* Результат по выбранной цели */
-        var labelText, hintText;
-        if (goal === 'lose') {
-            labelText = '📉 Для похудения';
-            hintText = 'Дефицит 500 ккал от вашей нормы (' + fmt(tdee) + ' ккал)';
-        } else if (goal === 'maintain') {
-            labelText = '⚖️ Для поддержания веса';
-            hintText = 'Ваш базовый обмен (BMR): ' + fmt(bmr) + ' ккал';
-        } else {
-            labelText = '💪 Для набора массы';
-            hintText = 'Профицит 500 ккал от вашей нормы (' + fmt(tdee) + ' ккал)';
-        }
+    totalsBlock.style.display = 'block';
+    renderProgress(tot);
+}
 
-        document.getElementById('result-goal-label').textContent = labelText;
-        document.getElementById('result-value').textContent = fmt(kcal);
-        document.getElementById('result-hint').textContent = hintText;
+function renderProgress(tot) {
+    var nKcal = parseFloat(localStorage.getItem('nutriplan_kcal'));
+    var nProt = parseFloat(localStorage.getItem('nutriplan_protein'));
+    var nFat  = parseFloat(localStorage.getItem('nutriplan_fat'));
+    var nCarb = parseFloat(localStorage.getItem('nutriplan_carbs'));
 
-        /* === БЖУ из той же функции === */
-        var proteinG = r.protein;
-        var fatG = r.fat;
-        var carbsG = r.carbs;
+    var hint = document.getElementById('food-progress-hint');
+    var bars = document.getElementById('food-progress-bars');
 
-        document.getElementById('bju-protein').textContent = proteinG + ' г';
-        document.getElementById('bju-fat').textContent     = fatG + ' г';
-        document.getElementById('bju-carbs').textContent   = carbsG + ' г';
-
-        /* === Сохранить в localStorage для планировщика === */
-        localStorage.setItem('nutriplan_kcal', Math.round(kcal));
-        localStorage.setItem('nutriplan_protein', proteinG);
-        localStorage.setItem('nutriplan_fat', fatG);
-        localStorage.setItem('nutriplan_carbs', carbsG);
-
-        /* === ИМТ === */
-        var bmi = r.bmi;
-        var bmiRound = bmi;
-
-        var statusText, statusClass;
-        if (bmi < 18.5) {
-            statusText = 'Дефицит массы тела';
-            statusClass = 'calc-bmi__status--under';
-        } else if (bmi < 25) {
-            statusText = 'Норма';
-            statusClass = 'calc-bmi__status--normal';
-        } else if (bmi < 30) {
-            statusText = 'Избыточная масса тела';
-            statusClass = 'calc-bmi__status--over';
-        } else {
-            statusText = 'Ожирение';
-            statusClass = 'calc-bmi__status--obese';
-        }
-
-        document.getElementById('bmi-value').textContent = bmiRound;
-        var statusEl = document.getElementById('bmi-status');
-        statusEl.textContent = statusText;
-        statusEl.className = 'calc-bmi__status ' + statusClass;
-
-        /* Позиция указателя на шкале (ИМТ от 15 до 40) */
-        var pct = ((bmi - 15) / (40 - 15)) * 100;
-        pct = Math.max(0, Math.min(100, pct));
-        document.getElementById('bmi-pointer').style.left = pct + '%';
-
-        /* === Возрастные особенности метаболизма === */
-        var ageData = ageMetabolism(age);
-        document.getElementById('ai-icon').textContent = ageData.icon;
-        document.getElementById('ai-title').textContent = ageData.title;
-        document.getElementById('ai-desc').textContent = ageData.desc;
-        document.getElementById('ai-fill').style.width = ageData.percent + '%';
-        var tipsHtml = '<h4>Советы для вашего возраста:</h4><ul>';
-        ageData.tips.forEach(function(tip) { tipsHtml += '<li>' + tip + '</li>'; });
-        tipsHtml += '</ul>';
-        document.getElementById('ai-tips').innerHTML = tipsHtml;
-        var ageEl = document.getElementById('age-info');
-        ageEl.className = 'age-info age-info--' + ageData.stage;
-        ageEl.style.display = 'block';
-
-        /* === Предупреждения о здоровье === */
-        var alertEl = document.getElementById('health-alert');
-        var haIcon = document.getElementById('ha-icon');
-        var haTitle = document.getElementById('ha-title');
-        var haDesc = document.getElementById('ha-desc');
-        var haRisks = document.getElementById('ha-risks');
-        var haTips = document.getElementById('ha-tips');
-
-        if (bmi < 16) {
-            /* Выраженный дефицит */
-            alertEl.style.display = 'block';
-            alertEl.className = 'health-alert health-alert--critical';
-            haIcon.textContent = '🚨';
-            haTitle.textContent = 'Критический дефицит массы тела';
-            haDesc.textContent = 'Ваш ИМТ (' + bmiRound + ') указывает на выраженный дефицит массы тела. Это серьёзное состояние, требующее внимания специалиста.';
-            haRisks.innerHTML =
-                '<li>Анорексия и расстройства пищевого поведения</li>' +
-                '<li>Дистрофия мышечной ткани</li>' +
-                '<li>Остеопороз (хрупкость костей)</li>' +
-                '<li>Анемия (снижение гемоглобина)</li>' +
-                '<li>Ослабление иммунной системы</li>' +
-                '<li>Гормональные нарушения</li>';
-            haTips.innerHTML =
-                '<li>Срочно обратитесь к врачу-терапевту и диетологу</li>' +
-                '<li>Увеличивайте калорийность постепенно (+300–500 ккал/день)</li>' +
-                '<li>Ешьте 5–6 раз в день маленькими порциями</li>' +
-                '<li>Добавьте калорийные, но полезные продукты: орехи, авокадо, сухофрукты, жирную рыбу</li>' +
-                '<li>Включите белковые продукты в каждый приём пищи</li>' +
-                '<li>Избегайте пустых калорий (фастфуд, сладкое)</li>';
-
-        } else if (bmi < 18.5) {
-            /* Дефицит массы */
-            alertEl.style.display = 'block';
-            alertEl.className = 'health-alert health-alert--warning';
-            haIcon.textContent = '⚠️';
-            haTitle.textContent = 'Дефицит массы тела';
-            haDesc.textContent = 'Ваш ИМТ (' + bmiRound + ') ниже нормы. Недостаточный вес может негативно влиять на здоровье.';
-            haRisks.innerHTML =
-                '<li>Снижение иммунитета — частые простуды и инфекции</li>' +
-                '<li>Хроническая усталость, слабость</li>' +
-                '<li>Потеря мышечной массы</li>' +
-                '<li>Проблемы с кожей, волосами и ногтями</li>' +
-                '<li>Нарушения менструального цикла (у женщин)</li>';
-            haTips.innerHTML =
-                '<li>Увеличьте калорийность рациона на 300–500 ккал</li>' +
-                '<li>Делайте упор на белки: мясо, рыба, яйца, творог, бобовые</li>' +
-                '<li>Добавляйте полезные жиры: орехи, оливковое масло, авокадо</li>' +
-                '<li>Перекусывайте между основными приёмами пищи</li>' +
-                '<li>Включите силовые тренировки для набора мышечной массы</li>' +
-                '<li>Рекомендуется консультация диетолога</li>';
-
-        } else if (bmi < 25) {
-            /* Норма */
-            alertEl.style.display = 'block';
-            alertEl.className = 'health-alert health-alert--good';
-            haIcon.textContent = '✅';
-            haTitle.textContent = 'Вес в пределах нормы';
-            haDesc.textContent = 'Ваш ИМТ (' + bmiRound + ') соответствует нормальному весу. Отлично! Продолжайте придерживаться сбалансированного питания.';
-            haRisks.innerHTML = '<li>Риски для здоровья, связанные с весом, минимальны</li>';
-            haTips.innerHTML =
-                '<li>Поддерживайте текущий рацион и уровень активности</li>' +
-                '<li>Ешьте разнообразно: овощи, фрукты, белки, цельные злаки</li>' +
-                '<li>Пейте достаточно воды (1.5–2 литра в день)</li>' +
-                '<li>Занимайтесь физической активностью 3–5 раз в неделю</li>' +
-                '<li>Контролируйте вес 1–2 раза в месяц</li>';
-
-        } else if (bmi < 30) {
-            /* Избыточная масса */
-            alertEl.style.display = 'block';
-            alertEl.className = 'health-alert health-alert--warning';
-            haIcon.textContent = '⚠️';
-            haTitle.textContent = 'Избыточная масса тела';
-            haDesc.textContent = 'Ваш ИМТ (' + bmiRound + ') указывает на избыточный вес. Это повышает риски для здоровья.';
-            haRisks.innerHTML =
-                '<li>Гипертония (повышенное артериальное давление)</li>' +
-                '<li>Сахарный диабет 2-го типа</li>' +
-                '<li>Повышенный холестерин</li>' +
-                '<li>Заболевания сердечно-сосудистой системы</li>' +
-                '<li>Боли в суставах и позвоночнике</li>' +
-                '<li>Нарушения сна (апноэ)</li>';
-            haTips.innerHTML =
-                '<li>Создайте умеренный дефицит калорий (−300–500 ккал/день)</li>' +
-                '<li>Сократите потребление сахара и мучных изделий</li>' +
-                '<li>Увеличьте долю белка и клетчатки в рационе</li>' +
-                '<li>Ешьте больше овощей — они дают сытость при низкой калорийности</li>' +
-                '<li>Добавьте регулярную физическую активность (ходьба, плавание)</li>' +
-                '<li>Рекомендуется консультация диетолога</li>';
-
-        } else if (bmi < 35) {
-            /* Ожирение I степени */
-            alertEl.style.display = 'block';
-            alertEl.className = 'health-alert health-alert--danger';
-            haIcon.textContent = '🔴';
-            haTitle.textContent = 'Ожирение I степени';
-            haDesc.textContent = 'Ваш ИМТ (' + bmiRound + ') соответствует ожирению I степени. Необходимо обратить серьёзное внимание на питание и образ жизни.';
-            haRisks.innerHTML =
-                '<li>Сахарный диабет 2-го типа</li>' +
-                '<li>Сердечно-сосудистые заболевания (инфаркт, инсульт)</li>' +
-                '<li>Жировой гепатоз (ожирение печени)</li>' +
-                '<li>Артроз коленных и тазобедренных суставов</li>' +
-                '<li>Гормональные нарушения</li>' +
-                '<li>Повышенный риск некоторых видов рака</li>';
-            haTips.innerHTML =
-                '<li>Обязательно обратитесь к врачу-эндокринологу</li>' +
-                '<li>Дефицит калорий 500–700 ккал/день под контролем специалиста</li>' +
-                '<li>Исключите фастфуд, сладкие напитки и полуфабрикаты</li>' +
-                '<li>Основа рациона: белок + овощи + цельные злаки</li>' +
-                '<li>Начните с лёгкой активности: ходьба 30 мин/день</li>' +
-                '<li>Ведите дневник питания для контроля калорий</li>';
-
-        } else {
-            /* Ожирение II–III степени */
-            alertEl.style.display = 'block';
-            alertEl.className = 'health-alert health-alert--critical';
-            haIcon.textContent = '🚨';
-            haTitle.textContent = 'Ожирение ' + (bmi < 40 ? 'II' : 'III') + ' степени';
-            haDesc.textContent = 'Ваш ИМТ (' + bmiRound + ') указывает на тяжёлую степень ожирения. Это состояние представляет серьёзную угрозу для здоровья и жизни.';
-            haRisks.innerHTML =
-                '<li>Тяжёлые формы диабета и инсулинорезистентность</li>' +
-                '<li>Хроническая сердечная недостаточность</li>' +
-                '<li>Тромбозы и эмболия</li>' +
-                '<li>Дыхательная недостаточность</li>' +
-                '<li>Разрушение суставов</li>' +
-                '<li>Депрессия и социальная изоляция</li>' +
-                '<li>Значительно повышенный риск онкологии</li>';
-            haTips.innerHTML =
-                '<li>Необходимо наблюдение у врача (терапевт, эндокринолог, диетолог)</li>' +
-                '<li>Снижение веса только под медицинским контролем</li>' +
-                '<li>Возможно назначение медикаментозной терапии</li>' +
-                '<li>Постепенное изменение пищевых привычек</li>' +
-                '<li>Физическая активность по рекомендации врача</li>' +
-                '<li>Психологическая поддержка может быть полезна</li>';
-        }
-
-        /* Показать результат */
-        document.getElementById('result').style.display = 'block';
-        document.getElementById('result').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (!nKcal || !nProt || !nFat || !nCarb) {
+        hint.style.display = 'block';
+        hint.innerHTML = 'Чтобы видеть прогресс, пройдите <a href="quiz.html" class="link">тест-опросник</a> — он рассчитает вашу дневную норму.';
+        bars.style.display = 'none';
+        return;
     }
+
+    hint.style.display = 'none';
+    bars.style.display = 'block';
+
+    function setBar(progId, textId, current, target, unit) {
+        var pct = Math.min(100, (current / target) * 100);
+        var el = document.getElementById(progId);
+        el.style.width = pct + '%';
+        el.classList.toggle('food-progress__fill--over', current > target);
+        document.getElementById(textId).textContent = fmt(current) + ' / ' + fmt(target) + (unit || '');
+    }
+    setBar('prog-kcal',  'prog-kcal-text',  tot.kcal, nKcal, '');
+    setBar('prog-prot',  'prog-prot-text',  tot.p,    nProt, ' г');
+    setBar('prog-fat',   'prog-fat-text',   tot.f,    nFat,  ' г');
+    setBar('prog-carbs', 'prog-carbs-text', tot.c,    nCarb, ' г');
+}
+
+function saveFoodList() {
+    try {
+        localStorage.setItem(FOOD_LIST_KEY, JSON.stringify({ date: todayLocal(), items: foodList }));
+    } catch(e) {}
+}
+
+function loadFoodList() {
+    try {
+        var raw = localStorage.getItem(FOOD_LIST_KEY);
+        if (!raw) return;
+        var data = JSON.parse(raw);
+        if (data.date === todayLocal() && Array.isArray(data.items)) foodList = data.items;
+    } catch(e) {}
+}
+
+/* ==================== АКТИВНОСТЬ ==================== */
+var ACTIVITY_LOG_KEY = 'nutriplan_activity_today';
+var selectedActivity = null;
+var intensity = 'mid';
+var activityLog = [];
+
+function renderActivityGrid() {
+    var grid = document.getElementById('activity-grid');
+    grid.innerHTML = window.ACTIVITY_DB.map(function(a) {
+        return '<button type="button" class="activity-card" data-id="' + a.id + '" onclick="selectActivity(\'' + a.id + '\')">' +
+            '<span class="activity-card__icon">' + a.icon + '</span>' +
+            '<span class="activity-card__name">' + a.name + '</span>' +
+        '</button>';
+    }).join('');
+}
+
+function selectActivity(id) {
+    selectedActivity = window.ACTIVITY_DB.find(function(a) { return a.id === id; });
+    document.querySelectorAll('.activity-card').forEach(function(el) {
+        el.classList.toggle('activity-card--active', el.dataset.id === id);
+    });
+    document.getElementById('activity-params').style.display = 'block';
+    document.getElementById('activity-result').style.display = 'none';
+}
+
+function setIntensity(level) {
+    intensity = level;
+    ['low','mid','high'].forEach(function(l) {
+        document.getElementById('int-' + l).className = (l === level) ? 'radio-tab radio-tab--active' : 'radio-tab';
+    });
+}
+
+function calcActivity() {
+    var weight = parseFloat(document.getElementById('act-weight').value) || parseFloat(localStorage.getItem('nutriplan_weight'));
+    var time = parseFloat(document.getElementById('act-time').value);
+
+    if (!weight || weight < 30 || weight > 300) { alert('Введите корректный вес (30–300 кг)'); return; }
+    if (!time || time <= 0 || time > 600) { alert('Введите время (1–600 минут)'); return; }
+    if (!selectedActivity) { alert('Выберите вид активности'); return; }
+
+    var met = selectedActivity[intensity];
+    var kcal = met * weight * (time / 60);
+    var intLbl = ({low:'низкая',mid:'средняя',high:'высокая'})[intensity];
+
+    document.getElementById('act-res-icon').textContent = selectedActivity.icon;
+    document.getElementById('act-res-kcal').textContent = fmt(kcal);
+    document.getElementById('act-res-sub').textContent = selectedActivity.name + ' · ' + time + ' мин · ' + intLbl + ' интенсивность';
+
+    var nKcal = parseFloat(localStorage.getItem('nutriplan_kcal'));
+    var hint = '';
+    if (nKcal) {
+        hint = 'При норме <strong>' + fmt(nKcal) + ' ккал/день</strong> сегодня можно съесть до <strong>' + fmt(nKcal + kcal) + ' ккал</strong>.';
+    } else {
+        hint = 'MET = ' + met + ' · формула: MET × вес × часы = ' + fmt(kcal) + ' ккал';
+    }
+    document.getElementById('act-res-hint').innerHTML = hint;
+
+    var res = document.getElementById('activity-result');
+    res.style.display = 'block';
+    res.dataset.kcal = kcal;
+    res.dataset.name = selectedActivity.name;
+    res.dataset.icon = selectedActivity.icon;
+    res.dataset.time = time;
+}
+
+function addToHistory() {
+    var res = document.getElementById('activity-result');
+    var k = parseFloat(res.dataset.kcal);
+    if (!k) return; /* защита от повторного клика — БАГ1 */
+    activityLog.push({
+        name: res.dataset.name, icon: res.dataset.icon,
+        time: parseFloat(res.dataset.time), kcal: k
+    });
+    saveActivityLog();
+    renderActivityHistory();
+
+    /* Сброс формы после добавления — Н2 */
+    res.style.display = 'none';
+    res.dataset.kcal = '';
+    res.dataset.name = '';
+    res.dataset.icon = '';
+    res.dataset.time = '';
+    document.getElementById('act-time').value = '';
+    setIntensity('mid');
+    selectedActivity = null;
+    document.querySelectorAll('.activity-card').forEach(function(el) {
+        el.classList.remove('activity-card--active');
+    });
+    document.getElementById('activity-params').style.display = 'none';
+}
+
+function removeActivity(idx) {
+    activityLog.splice(idx, 1);
+    saveActivityLog();
+    renderActivityHistory();
+}
+
+function renderActivityHistory() {
+    var box = document.getElementById('activity-history');
+    if (activityLog.length === 0) { box.style.display = 'none'; return; }
+    var listEl = document.getElementById('activity-history-list');
+    listEl.innerHTML = activityLog.map(function(a, i) {
+        return '<div class="activity-hist-item">' +
+            '<span class="activity-hist-item__icon">' + a.icon + '</span>' +
+            '<div class="activity-hist-item__info">' +
+                '<div>' + a.name + '</div>' +
+                '<div class="activity-hist-item__sub">' + a.time + ' мин · ' + fmt(a.kcal) + ' ккал</div>' +
+            '</div>' +
+            '<button class="activity-hist-item__del" onclick="removeActivity(' + i + ')" aria-label="Удалить">✕</button>' +
+        '</div>';
+    }).join('');
+    var total = activityLog.reduce(function(s, x) { return s + x.kcal; }, 0);
+    document.getElementById('act-total').textContent = fmt(total) + ' ккал';
+    box.style.display = 'block';
+}
+
+function saveActivityLog() {
+    try { localStorage.setItem(ACTIVITY_LOG_KEY, JSON.stringify({ date: todayLocal(), items: activityLog })); } catch(e) {}
+}
+function loadActivityLog() {
+    try {
+        var raw = localStorage.getItem(ACTIVITY_LOG_KEY);
+        if (!raw) return;
+        var data = JSON.parse(raw);
+        if (data.date === todayLocal() && Array.isArray(data.items)) activityLog = data.items;
+    } catch(e) {}
+}
+
+/* ==================== РАЗМЕР ПОРЦИИ ==================== */
+var portionProduct = null;
+var portionTarget = 'kcal';
+
+document.getElementById('portion-search').addEventListener('input', function(e) {
+    portionProduct = null;
+    document.getElementById('portion-selected').style.display = 'none';
+    document.getElementById('portion-target-block').style.display = 'none';
+    document.getElementById('portion-result').style.display = 'none';
+    searchFood(e.target.value, 'portion-suggestions', function(product) {
+        portionProduct = product;
+        document.getElementById('portion-search').value = product.name;
+        showPortionProduct();
+    }, 'portion-search');
+});
+attachSearchKeyboard('portion-search');
+
+/* Enter в поле "значение" порции — рассчитать */
+document.getElementById('portion-value').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') { e.preventDefault(); calcPortion(); }
+});
+
+function showPortionProduct() {
+    if (!portionProduct) return;
+    document.getElementById('portion-product-name').textContent = portionProduct.name;
+    document.getElementById('portion-product-nutri').innerHTML =
+        '<span>🔥 ' + portionProduct.kcal + ' ккал</span>' +
+        '<span>Б ' + fmt1(portionProduct.p) + '</span>' +
+        '<span>Ж ' + fmt1(portionProduct.f) + '</span>' +
+        '<span>У ' + fmt1(portionProduct.c) + '</span>' +
+        '<span class="portion-selected__base">на 100 г</span>';
+    document.getElementById('portion-selected').style.display = 'block';
+    document.getElementById('portion-target-block').style.display = 'block';
+}
+
+function setPortionTarget(t) {
+    portionTarget = t;
+    document.getElementById('ptg-kcal').className = (t === 'kcal') ? 'radio-tab radio-tab--active' : 'radio-tab';
+    document.getElementById('ptg-prot').className = (t === 'prot') ? 'radio-tab radio-tab--active' : 'radio-tab';
+    document.getElementById('portion-unit').textContent = (t === 'kcal') ? 'ккал' : 'г белка';
+}
+
+function calcPortion() {
+    if (!portionProduct) { alert('Выберите продукт'); return; }
+    var target = parseFloat(document.getElementById('portion-value').value);
+    if (!target || target <= 0) { alert('Введите цель'); return; }
+
+    var per100 = (portionTarget === 'kcal') ? portionProduct.kcal : portionProduct.p;
+    if (!per100 || per100 === 0) {
+        alert('В этом продукте слишком мало ' + (portionTarget === 'kcal' ? 'калорий' : 'белка') + ' — порция получится нереальной.');
+        return;
+    }
+
+    var grams = (target / per100) * 100;
+    if (grams > 5000) {
+        alert('Чтобы получить столько ' + (portionTarget === 'kcal' ? 'калорий' : 'белка') + ', нужно > 5 кг продукта. Попробуйте другую цель.');
+        return;
+    }
+
+    var k = grams / 100;
+    document.getElementById('portion-grams').textContent = fmtSmart(grams);
+    document.getElementById('portion-product-result').textContent = portionProduct.name.toLowerCase();
+    document.getElementById('portion-result-macros').innerHTML =
+        '<div class="portion-macro"><span class="portion-macro__val">' + fmt(portionProduct.kcal * k) + '</span><span class="portion-macro__lbl">ккал</span></div>' +
+        '<div class="portion-macro"><span class="portion-macro__val">' + fmt1(portionProduct.p * k) + ' г</span><span class="portion-macro__lbl">Белки</span></div>' +
+        '<div class="portion-macro"><span class="portion-macro__val">' + fmt1(portionProduct.f * k) + ' г</span><span class="portion-macro__lbl">Жиры</span></div>' +
+        '<div class="portion-macro"><span class="portion-macro__val">' + fmt1(portionProduct.c * k) + ' г</span><span class="portion-macro__lbl">Углеводы</span></div>';
+
+    var hint = window.PORTION_HINTS[portionProduct.cat];
+    document.getElementById('portion-hint').innerHTML = hint ? '💡 ' + hint : '';
+    document.getElementById('portion-result').style.display = 'block';
+}
+
+/* ==================== ИНИЦИАЛИЗАЦИЯ ==================== */
+loadFoodList();
+renderFoodList();
+loadActivityLog();
+renderActivityHistory();
+renderActivityGrid();
+
+var savedWeight = localStorage.getItem('nutriplan_weight');
+if (savedWeight) document.getElementById('act-weight').value = savedWeight;
+
+/* Enter в поле "время" — рассчитать */
+document.getElementById('act-time').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') { e.preventDefault(); calcActivity(); }
+});
+
+try {
+    var savedTab = localStorage.getItem(ACTIVE_TAB_KEY);
+    if (savedTab && ['food','activity','portion'].indexOf(savedTab) !== -1) switchTab(savedTab);
+} catch(e) {}
 </script>
+<script type="module" src="firebase-config.js"></script>
 <script src="common.js"></script>
 </body>
 </html>
