@@ -2410,3 +2410,22 @@ a.sp-meal--link:hover .sp-meal__name { color:var(--primary); }
 
 /* ============ Sticky footer (отключено — ломало sticky-элементы и hero) ============ */
 
+
+/* ============ Sticky footer (только для коротких страниц) ============
+   Только страница опроса (quiz) и авторизации (auth) имеют мало контента.
+   На них контентная секция растягивается до низа экрана.
+   На остальных страницах поведение не меняется — body НЕ становится flex.
+*/
+body.short-page{min-height:100vh;display:flex;flex-direction:column}
+body.short-page > section,
+body.short-page > main{flex:1 0 auto}
+body.short-page > footer{flex-shrink:0}
+
+/* ============ Прижать футер к низу окна когда контента мало ============
+   Используется grid вместо flex чтобы не ломать position:sticky дочерних элементов
+*/
+body{
+    display:grid;
+    grid-template-rows:auto 1fr auto;
+    min-height:100vh;
+}
