@@ -2404,3 +2404,10 @@ a.sp-meal--link:hover .sp-meal__name { color:var(--primary); }
     .login-req-icon{font-size:3rem}
     .login-req-actions{flex-direction:column}
 }
+
+/* ============ Sticky footer ============
+   Прижимает футер к низу окна когда контента на странице мало
+*/
+html, body{height:100%}
+body{display:flex;flex-direction:column;min-height:100vh}
+body > footer, body > .footer{margin-top:auto}
