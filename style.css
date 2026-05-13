@@ -39,19 +39,22 @@ a{text-decoration:none;color:inherit}img{max-width:100%;display:block}
 .hero{padding:80px 0 100px;background:linear-gradient(170deg,var(--white),var(--cream) 50%,var(--primary-bg));position:relative;overflow:hidden}
 .hero::before{content:'';position:absolute;top:-60px;right:-60px;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,rgba(212,168,67,.08),transparent 70%)}
 .hero__inner{display:flex;align-items:center;gap:60px;position:relative;z-index:2}
-.hero__content{flex:1 1 55%;max-width:540px;min-width:0;position:relative;z-index:3}
+.hero__content{flex:1;max-width:540px}
 .hero__label{display:inline-block;background:var(--primary-pale);color:var(--primary);padding:6px 16px;border-radius:50px;font-size:.85rem;font-weight:600;margin-bottom:20px}
 .hero__title{font-family:var(--font-display);font-size:3rem;font-weight:700;line-height:1.15;color:var(--dark);margin-bottom:20px}
 .hero__title--accent{color:var(--primary)}
 .hero__desc{font-size:1.1rem;color:var(--text-light);line-height:1.7;margin-bottom:36px}
 .hero__actions{display:flex;gap:16px;flex-wrap:wrap}
-.hero__visual{flex:1 1 45%;position:relative;min-height:380px;min-width:0;display:flex;align-items:center;justify-content:center}
+.hero__visual{flex:1;position:relative;min-height:380px;display:flex;align-items:center;justify-content:center}
 .hero__circle{width:300px;height:300px;border-radius:50%;background:linear-gradient(135deg,var(--primary-pale),rgba(181,101,29,.08));position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}
 .hero__card{position:absolute;background:var(--white);border-radius:var(--radius);padding:20px 28px;box-shadow:var(--shadow);display:flex;align-items:center;gap:12px;transition:transform var(--tr),box-shadow var(--tr);z-index:2}
 .hero__card:hover{transform:translateY(-4px) scale(1.03);box-shadow:var(--shadow-hover)}
 .hero__card-emoji{font-size:2rem}
 .hero__card-text{font-weight:600;color:var(--dark);font-size:1rem}
-.hero__card--1{top:10%;left:10%}.hero__card--2{top:5%;right:10%}.hero__card--3{bottom:10%;left:5%}.hero__card--4{bottom:5%;right:15%}
+.hero__card--1{top:10%;left:10%}
+.hero__card--2{top:5%;right:10%}
+.hero__card--3{bottom:10%;left:5%}
+.hero__card--4{bottom:5%;right:15%}
 
 /* FEATURES */
 .features{padding:100px 0;background:var(--white);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
@@ -129,18 +132,6 @@ a{text-decoration:none;color:inherit}img{max-width:100%;display:block}
     position:sticky;
     top:72px;
     z-index:50;
-}
-/* Заполнитель зазора между шапкой и filters-bar при скролле — псевдоэлемент с фоном страницы */
-.filters-bar::before{
-    content:'';
-    position:absolute;
-    left:-100vw;
-    right:-100vw;
-    top:-72px;
-    height:72px;
-    background:var(--bg);
-    pointer-events:none;
-    z-index:-1;
 }
 .filters__list{display:flex;justify-content:flex-start;gap:10px;flex-wrap:wrap;margin:0}
 .filters__add{white-space:nowrap;flex-shrink:0}
@@ -2417,9 +2408,5 @@ a.sp-meal--link:hover .sp-meal__name { color:var(--primary); }
     .login-req-actions{flex-direction:column}
 }
 
-/* ============ Sticky footer ============
-   Прижимает футер к низу окна когда контента на странице мало
-*/
-html, body{height:100%}
-body{display:flex;flex-direction:column;min-height:100vh}
-body > footer, body > .footer{margin-top:auto}
+/* ============ Sticky footer (отключено — ломало sticky-элементы и hero) ============ */
+
